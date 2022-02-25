@@ -1,6 +1,6 @@
 # CondSig
 
-**CondSig** (**Cond**ensate-like chromatin-associated proteins co-occupancy **Sig**nature) is a comprehensive computational framework to predict component collaborations and genomic loci of potential chromatin-associated biomolecular condensates. The computation framework first detect genome-wide chromatin-associated proteins collaborations in specific loci by integrating ChIP-seq datasets and then screen out some may be involved in biomolecular condensation based on known condensation characteristics.
+**CondSig** (**Cond**ensate-like chromatin-associated proteins co-occupancy **Sig**nature) is a comprehensive computational framework to predict component CAPs (chromatin-associated proteins) and genomic loci of potential chromatin-associated biomolecular condensates. The computation framework first detect genome-wide chromatin-associated proteins collaborations in specific loci by integrating ChIP-seq datasets and then screen out some may be involved in biomolecular condensation based on known condensation characteristics.
 
 <p align="center">
 <img src="./Image/Schematic.png"/>
