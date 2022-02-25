@@ -13,7 +13,7 @@
 
 ## Documentation
 
-We are hosting MAESTRO documentation, instruction and tutorials at .
+We are hosting CondSig documentation, instruction and tutorials at .
 
 ## Change Log
 
@@ -24,9 +24,9 @@ We are hosting MAESTRO documentation, instruction and tutorials at .
 * Linux/Unix
 * Python (>= 3.6) for CondSig workflow
 
-### Install CondSig
+## Install CondSig
 
-#### Installing the CondSig workflow through conda
+### Installing the CondSig workflow through conda
 
 CondSig uses the [Anaconda3](http://conda.pydata.org/miniconda.html) package management system to harmonize all of the software packages. Users can install the full solution of MAESTRO using the conda environment.
 
