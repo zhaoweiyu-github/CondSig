@@ -1,7 +1,7 @@
 # CondSig
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-blue)](https://www.gnu.org/licenses/gpl-3.0)
+[![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 **CondSig** (**Cond**ensate-like chromatin-associated proteins co-occupancy **Sig**nature) is a comprehensive computational framework to predict component CAPs (chromatin-associated proteins) and genomic loci of potential chromatin-associated biomolecular condensates. The computation framework first detect genome-wide chromatin-associated proteins collaborations in specific loci by integrating ChIP-seq datasets and then screen out some may be involved in biomolecular condensation based on known condensation characteristics.
 
