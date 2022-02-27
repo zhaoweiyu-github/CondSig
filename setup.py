@@ -24,7 +24,7 @@ def main():
 		package_dir = {"CondSig":"src"},
 		packages = ["CondSig"],
 		# packages = find_packages(where = "CondSig"),
-		scripts = ["bin/condsig", "bin/biterm_local.sh", "bin/btm"]
+		scripts = ["bin/condsig", "bin/biterm_local.sh"]
 		)
 
 if __name__ == "__main__":
