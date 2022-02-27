@@ -19,11 +19,11 @@ except ImportError:
 
 def main():
 	setup(
-		name = "condsig",
+		name = "CondSig",
 		version = "1.0.0",
 		package_dir = {"CondSig":"CondSig"},
 		# packages = ["CondSig"],
-		packages = find_packages(where = "CondSig")
+		packages = find_packages(where = "CondSig"),
 		scripts = ["bin/condsig", "bin/biterm_local.sh"]
 		)
 
