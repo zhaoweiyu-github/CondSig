@@ -1,0 +1,332 @@
+#!/usr/bin/env python3
+# Time-stamp: <2021-09-01 Zhaowe Yu>
+
+"""
+Description: CondSig v1.0.0
+Copyright (c) 2021 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
+
+@status: release candidate
+@version: v1.0.0
+@author:  Zhaowei Yu
+@contact: zhaoweiyu@tongji.edu.cn
+"""
+
+# ------------------------------
+#  python modules
+# ------------------------------
+
+import os,sys
+import argparse as ap
+import pandas as pd
+
+# ------------------------------
+#  own python modules
+# ------------------------------
+
+from CondSig.BasicSetting import *
+from CondSig import LearnSig
+from CondSig import FilterSig
+
+
+# --------------------------
+#  Main functions
+# --------------------------
+
+def main():
+	"""The Main function for CondSig"""
+
+	# Parse options
+	argparser = prepare_argparser()
+	args = argparser.parse_args()
+
+	subcommand  = args.subcommand_name
+	
+	### LearnSig
+	if subcommand == "LearnSig":
+		args = check_LearnSig_arguments(args)
+
+		dataprocess = LearnSig.DataProcessing(args)
+		df_peakov_raw, df_peakov_filtered, output_prefix = dataprocess.run()
+
+		if not os.path.isdir("LearnSig"):
+			os.mkdir("LearnSig")
+		os.chdir("LearnSig")
+
+		filtered_promoter_topics_list = []
+		filtered_nonpromoter_topics_list = []
+		if args.mode == "focus":
+			if args.focus in df_peakov_filtered.columns:
+				siglearn = LearnSig.SignatureLearning(df_peakov_raw, df_peakov_filtered, args, output_prefix)
+				df_filtered_promoter_topics_focus, df_filtered_nonpromoter_topics_focus = siglearn.learn_focus(args.focus, count = 1, total_jobs = 1)
+				filtered_promoter_topics_list.append(df_filtered_promoter_topics_focus)
+				filtered_nonpromoter_topics_list.append(df_filtered_nonpromoter_topics_focus)
+			else:
+				error("2. Focus TR {0} is not in data annotation file or has too few peaks." . format(args.focus))
+				sys.exit(0)
+
+		if args.mode == "all":
+			count = 1
+			for focus_TR in dataprocess.df_dataset.loc[:, "label"].values:
+				if focus_TR in df_peakov_filtered.columns:
+					siglearn = LearnSig.SignatureLearning(df_peakov_raw, df_peakov_filtered, args, output_prefix)
+					df_filtered_promoter_topics_focus, df_filtered_nonpromoter_topics_focus = siglearn.learn_focus(focus_TR, count, total_jobs = dataprocess.df_dataset.shape[0])
+					filtered_promoter_topics_list.append(df_filtered_promoter_topics_focus)
+					filtered_nonpromoter_topics_list.append(df_filtered_nonpromoter_topics_focus)
+				else:
+					error("2. Focus TR {0} is not in data annotation file or has too few peaks." . format(focus_TR))
+				count += 1
+
+		df_filtered_promoter_topics_all = pd.concat(filtered_promoter_topics_list, axis = 0)
+		df_filtered_nonpromoter_topics_all = pd.concat(filtered_nonpromoter_topics_list, axis = 0)
+		df_filtered_promoter_topics_all.to_csv("{0}_filtered_promoter_topics_all.txt" . format(args.name), header = True, sep = "\t", index = False)
+		df_filtered_nonpromoter_topics_all.to_csv("{0}_filtered_nonpromoter_topics_all.txt" . format(args.name), header = True, sep = "\t", index = False)
+
+	### FilterSig
+	if subcommand == "FilterSig":
+		args = check_FilterSig_arguments(args)
+
+		df_filtered_promoter_topics_all = pd.read_csv("{0}/LearnSig/{1}_filtered_promoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName), header = 0, sep = "\t")
+		df_filtered_nonpromoter_topics_all = pd.read_csv("{0}/LearnSig/{1}_filtered_nonpromoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName), header = 0, sep = "\t")
+
+		os.chdir(args.out_dir)
+
+		# info("1. Preprocessing input file ... ")
+		# sigFE = FilterSig.SigFE(args)
+		# sigFE.FE_preprocess()
+
+		if not os.path.isdir("FilterSig"):
+			os.mkdir("FilterSig")
+		os.chdir("FilterSig")
+
+		if not os.path.isdir("Features"):
+			os.mkdir("Features")
+
+		# info("2. Feature enginerring ... ")
+		# count = 1
+		# for index, row in df_filtered_promoter_topics_all.iterrows():
+			# SigName = row["topic_name"]
+			# info("2-1-{0}. Feature enginerring for promoter signature : {1}" . format(count, SigName))
+			# sigFE.FE_run(SigName, "promoter")
+			# count += 1
+		# for index, row in df_filtered_nonpromoter_topics_all.iterrows():
+			# SigName = row["topic_name"]
+			# info("2-1-{0}. Feature enginerring for non-promoter signature : {1}" . format(count, SigName))
+			# sigFE.FE_run(SigName, "nonpromoter")
+			# count += 1
+
+		# info("3. Evaluation of condensation capacity of signatures ... ")
+		# if not os.path.isdir("ROC"):
+			# os.mkdir("ROC")
+		# if not os.path.isdir("XGBoost"):
+			# os.mkdir("XGBoost")
+
+		# sigEval = FilterSig.SigEval(args)
+		# count = 1
+		# for index, row in df_filtered_promoter_topics_all.iterrows():
+			# SigName = row["topic_name"]
+			# info("3-1-{0}. Feature evaluation for promoter signature : {1}" . format(count, SigName))
+			# sigEval.run(SigName, "promoter")
+			# count += 1
+		# for index, row in df_filtered_nonpromoter_topics_all.iterrows():
+			# SigName = row["topic_name"]
+			# info("3-1-{0}. Feature evaluation for non-promoter signature : {1}" . format(count, SigName))
+			# sigEval.run(SigName, "nonpromoter")
+			# count += 1
+
+		info("4. Filter condensate-like signatures ... ")
+		if not os.path.isdir("CLSig"):
+			os.mkdir("CLSig")
+
+		sigFilter = FilterSig.SigFilter(args)
+		sigFilter.filter(df_filtered_promoter_topics_all, "promoter")
+		sigFilter.filter(df_filtered_nonpromoter_topics_all, "nonpromoter")
+
+
+def prepare_argparser():
+	"""Prepare optparser object. New options will be added in this function first."""
+
+	description = "%(prog)s -- CONDensate-like transcription regulator co-occupancy SIGnatures"
+	epilog = "For command line options of each command, type: %(prog)s COMMAND -h"
+
+	# top-level parser
+	argparser = ap.ArgumentParser( description = description, epilog = epilog )
+	subparsers = argparser.add_subparsers( dest = 'subcommand_name' )
+
+	# command for 'LearnSig'
+	add_LearnSig_parser(subparsers)
+
+	# command for 'FilterSig'
+	add_FilterSig_parser(subparsers)	
+
+	return(argparser)
+
+def add_FilterSig_parser(subparsers):
+	"""Add function 'FilterSig' argument parsers"""
+
+	argparser_FilterSig = subparsers.add_parser("FilterSig", help = "Filtering condensate-like transcription regulator co-occupancy signatures.")
+
+	# group for input files
+	group_input = argparser_FilterSig.add_argument_group( "Input files arguments" )
+	
+	group_input.add_argument( "--DataAnnotation", dest = "data_annotation", type = str, required = True, help = "Data annotation file used in LearnSig. REQUIRED." )
+	group_input.add_argument( "--SigInputPath", dest = "Sig_InputPath", type = str, required = True, help = "Input LearnSig path. REQUIRED." )
+	group_input.add_argument( "--SigInputName", dest = "Sig_InputName", type = str, required = True, help = "Input LearnSig name. REQUIRED." )
+
+	group_input.add_argument( "--LLPS", dest = "LLPS", type = str, required = True, help = "Annotation of LLPS proteins. REQUIRED." )
+	group_input.add_argument( "--MLO", dest = "MLO", type = str, required = True, help = "Annotation of MLO component. REQUIRED." )
+	group_input.add_argument( "--PPI", dest = "PPI", type = str, required = True, help = "Annotation of protein-protein interaction. REQUIRED." )
+	group_input.add_argument( "--IDR", dest = "IDR", type = str, required = True, help = "Annotation of protein IDR properties. REQUIRED." )
+	group_input.add_argument( "--RBD", dest = "RBD", type = str, required = True, help = "Annotation of RNA-binding domain content of proteins. REQUIRED." )
+	group_input.add_argument( "--RBS", dest = "RBS", type = str, default = None, help = "Big wiggle track of genome-wide RNA-binding density. Default: None." )
+
+	group_input.add_argument( "--Accessibility", dest = "accessibility", type = str, required = True, help = "Big wiggle track of chromatin accessibility. REQUIRED." )
+	group_input.add_argument( "--Motif", dest = "motif", type = str, required = True, help = "Motif path containing all bed files of motif-presence sites. REQUIRED." )
+	group_input.add_argument( "--GenomeVersion", dest = "genome_version", type = str, default = "hg38", help = "The genome version of peak file. Default:hg38." )
+
+	group_input.add_argument( "--Threads", dest = "threads", type = int, default = 8, help = "The processes used of the job. Default:8." )
+
+	# group for output files
+	group_output = argparser_FilterSig.add_argument_group( "Output files arguments" )
+	group_output.add_argument( "--Name", dest = "name", type = str, default = None, help = "Output name. Default: Input LearnSig name." )
+	group_output.add_argument( "--OutDir", dest = "out_dir", type = str, default = None, help = "Output directory (absolute path required). Default: Input LearnSig path." )
+
+
+def add_LearnSig_parser(subparsers):
+	"""Add function 'LearnSig' argument parsers"""
+	
+	argparser_LearnSig = subparsers.add_parser("LearnSig", help = "Learning transcription regulator co-occupancy signatures.")
+	
+	# group for input files
+	group_input = argparser_LearnSig.add_argument_group( "Input files arguments" )
+	group_input.add_argument( "--DataAnnotation", dest = "data_annotation", type = str, required = True, help = "Annotation file of TRs in the same cell type. 5 columns of annotation file are factor, label, peak file directory, uniprot id and uniprot entry with tab delimited. Example: CTCFL K562_GSM803401_CTCFL K562_GSM803401_CTCFL.bed Q8NI51 CTCFL_HUMAN. REQUIRED." )
+
+	group_input.add_argument( "--Mode", dest = "mode", type = str, default = "all", help = "Mode of detecting TR co-occupancy signatures. 'all' means detecting co-occupancy signatures for each TR iteatively and 'focus' means detecting co-occupancy signatures for focus TR. Default:all." )
+	group_input.add_argument( "--Focus", dest = "focus", type = str, help = "Focus TR, avaiable when focus mode is set." )
+	group_input.add_argument( "--FocusNumber", dest = "focus_number", type = int, default = 50, help = "The number of focused potential combinatorial TRs. Default:50." )
+
+	group_input.add_argument( "--MinSignatures", dest = "min_signatures", type = float, default = 2, help = "The minimum number of signatures. Default:2." )
+	group_input.add_argument( "--MaxSignatures", dest = "max_signatures", type = float, default = 10, help = "The maximum number of signatures. Default:10." )
+
+	group_input.add_argument( "--Threads", dest = "threads", type = int, default = 8, help = "The processes used of the job. Default:8." )
+
+	group_input.add_argument( "--GenomeVersion", dest = "genome_version", type = str, default = "hg38", help = "The genome version of peak file. Default:hg38." )
+
+	# group for output files
+	group_output = argparser_LearnSig.add_argument_group( "Output files arguments" )
+	group_output.add_argument( "--Name", dest = "name", type = str, default = "Test", help = "Output name. Default:Test" )
+	group_output.add_argument( "--OutDir", dest = "out_dir", type = str, default = os.getcwd(), help = "Output directory (absolute path required). Default:." )
+	group_output.add_argument( "--Zscore", dest = "zscore", type = float, default = 1.0, help = "Z-score threshold for identifying component TRs of signatures. Default:1." )
+
+def check_FilterSig_arguments(args):
+	"""Check arguments for FilterSig module"""
+
+	if not os.path.isfile(args.data_annotation):
+		error("{0} is not a file or a directory. Please check it." . format(args.data_annotation))
+		sys.exit(0)
+
+	# check the setting of signature annotation file
+	args.Sig_InputPath = os.path.abspath(args.Sig_InputPath)
+	if not os.path.isfile("{0}/LearnSig/{1}_filtered_promoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName)):
+		error("No annotation for co-occupancy signatures was found in {0}/LearnSig. Please check your input path or your LearnSig module." . format(args.Sig_InputPath))
+		sys.exit(0)
+	if not os.path.isfile("{0}/LearnSig/{1}_filtered_nonpromoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName)):
+		error("No annotation for co-occupancy signatures was found in {0}/LearnSig. Please check your input path or your LearnSig module." . format(args.Sig_InputPath))
+		sys.exit(0)
+
+	# check the files of LLPS, MLO, PPI, IDR, RBD, RBS, Accessibility and TSS
+	for filepath in [args.LLPS, args.MLO, args.PPI, args.IDR, args.RBD, args.accessibility]:
+		if not os.path.isfile(filepath):
+			error("No such file: {0}" . format(filepath))
+			sys.exit(0)
+
+	args.LLPS = os.path.abspath(args.LLPS)
+	args.MLO = os.path.abspath(args.MLO)
+	args.PPI = os.path.abspath(args.PPI)
+	args.IDR = os.path.abspath(args.IDR)
+	args.RBD = os.path.abspath(args.RBD)
+	args.accessibility = os.path.abspath(args.accessibility)
+
+
+	if args.RBS != None:
+		if not os.path.isfile(args.RBS):
+			error("No such file: {0}" . format(args.RBS))
+			sys.exit(0)
+
+		args.RBS = os.path.abspath(args.RBS)
+
+	# check the TSS file
+	anno_dir = "/mnt/Storage/home/yuzhaowei/projects/Factor.Harbor/software/CondSig/resource"
+	TSS_file = "{0}.tss.bed" . format(args.genome_version)
+	if not os.path.isfile("{0}/{1}" . format(anno_dir, TSS_file)):
+		error("No TSS file for the given genome version. Check your genome version {0} or annotation file directory {1}." . format(args.genome_version, anno_dir))
+	else:
+		args.genome_annotation = lambda: None # add a new attribute for genome annotation to args object 
+		setattr(args.genome_annotation, "TSS_file", "{0}/{1}" . format(anno_dir, TSS_file)) # set attributes contents
+
+	# check the directory of motif
+	if not os.path.isdir(args.motif):
+		error("No such directory: {0}" . format(args.motif))
+	args.motif = os.path.abspath(args.motif)
+
+	# check the outpath
+	if args.name == None:
+		args.name = args.Sig_InputName
+
+	if args.out_dir == None:
+		args.out_dir = args.Sig_InputPath
+
+	if not os.path.isdir(args.out_dir):
+		os.mkdir(args.out_dir)
+	args.out_dir = os.path.abspath(args.out_dir)
+
+	return(args)
+
+
+def check_LearnSig_arguments(args):
+	"""Check arguments for LearnSig module"""
+
+	# check the setting of annotation file
+	if not os.path.isfile(args.data_annotation):
+		error("{0} is not a file or a directory. Please check it." . format(args.data_annotation))
+		sys.exit(0)
+
+	# check the setting of mode and focus TR
+	if args.mode == "all":
+		if args.focus:
+			warn("The setting of focus TR for {0} is not invalid when all mode is set." . format(args.focus))
+	elif args.mode == "focus":
+		if not args.focus:
+			warn("Focus TR must be set when focus mode is set.")
+	else:
+		error("Mode must be 'all' or 'focus'. Please check it.")
+		sys.exit(0)
+
+	if not os.path.isdir(args.out_dir):
+		os.mkdir(args.out_dir)
+
+	# check the annotation files for genome version
+	anno_dir = "/mnt/Storage/home/yuzhaowei/projects/Factor.Harbor/software/CondSig/resource"
+	chromsize_file = "{0}_clean.chrom.sizes" . format(args.genome_version)
+	promoter_file = "{0}.promoter.3k.bed" . format(args.genome_version)
+	blacklist_file = "{0}-blacklist.v2.bed" . format(args.genome_version)
+	if not os.path.isfile("{0}/{1}" . format(anno_dir, chromsize_file)):
+		error("No chromosome size file for the given genome version. Check your genome version {0} or annotation file directory {1}." . format(args.genome_version, anno_dir))
+	elif not os.path.isfile("{0}/{1}" . format(anno_dir, promoter_file)):
+		error("No promoter annotation file for the given genome version. Check your genome version {0} or annotation file directory {1}." . format(args.genome_version, anno_dir))
+	elif not os.path.isfile("{0}/{1}" . format(anno_dir, blacklist_file)):
+		error("No ENCODE blacklist annotation file for the given genome version. Check your genome version {0} or annotation file directory {1}." . format(args.genome_version, anno_dir))
+	else:
+		args.genome_annotation = lambda: None # add a new attribute for genome annotation to args object 
+		setattr(args.genome_annotation, "chromsize_file", "{0}/{1}" . format(anno_dir, chromsize_file)) # set attributes contents
+		setattr(args.genome_annotation, "promoter_file", "{0}/{1}" . format(anno_dir, promoter_file)) # set attributes contents
+		setattr(args.genome_annotation, "blacklist_file", "{0}/{1}" . format(anno_dir, blacklist_file)) # set attributes contents
+	return(args)
+
+
+if __name__ == '__main__':
+	try:
+		main()
+	except KeyboardInterrupt:
+		sys.stderr.write("User interrupted me! ;-) Bye!\n")
+		sys.exit(0)
+
