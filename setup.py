@@ -22,8 +22,8 @@ def main():
 		name = "CondSig",
 		version = "1.0.0",
 		package_dir = {"CondSig":"src"},
-		# packages = ["CondSig"],
-		packages = find_packages(where = "CondSig"),
+		packages = ["CondSig"],
+		# packages = find_packages(where = "CondSig"),
 		scripts = ["bin/condsig", "bin/biterm_local.sh"]
 		)
 
