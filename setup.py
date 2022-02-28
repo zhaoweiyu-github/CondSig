@@ -27,8 +27,8 @@ def main():
 		package_dir = {"CondSig":"src"},
 		packages = ["CondSig"],
 		scripts = ["bin/condsig", "bin/biterm_local.sh"],
-		package_data = {"CondSig":["resource/*"]},
-		install_requires = ["pandas", "numpy", "scipy", "pyBigWig", "shap", "matplotlib", "sklearn", "xgboost"]
+		package_data = {"CondSig":["resource/*"]}
+		# install_requires = ["pandas", "numpy", "scipy", "shap", "matplotlib", "sklearn", "xgboost"]
 		)
 
 if __name__ == "__main__":
