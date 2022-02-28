@@ -90,9 +90,9 @@ def main():
 
 		os.chdir(args.out_dir)
 
-		# info("1. Preprocessing input file ... ")
-		# sigFE = FilterSig.SigFE(args)
-		# sigFE.FE_preprocess()
+		info("1. Preprocessing input file ... ")
+		sigFE = FilterSig.SigFE(args)
+		sigFE.FE_preprocess()
 
 		if not os.path.isdir("FilterSig"):
 			os.mkdir("FilterSig")
@@ -101,37 +101,37 @@ def main():
 		if not os.path.isdir("Features"):
 			os.mkdir("Features")
 
-		# info("2. Feature enginerring ... ")
-		# count = 1
-		# for index, row in df_filtered_promoter_topics_all.iterrows():
-			# SigName = row["topic_name"]
-			# info("2-1-{0}. Feature enginerring for promoter signature : {1}" . format(count, SigName))
-			# sigFE.FE_run(SigName, "promoter")
-			# count += 1
-		# for index, row in df_filtered_nonpromoter_topics_all.iterrows():
-			# SigName = row["topic_name"]
-			# info("2-1-{0}. Feature enginerring for non-promoter signature : {1}" . format(count, SigName))
-			# sigFE.FE_run(SigName, "nonpromoter")
-			# count += 1
+		info("2. Feature enginerring ... ")
+		count = 1
+		for index, row in df_filtered_promoter_topics_all.iterrows():
+			SigName = row["topic_name"]
+			info("2-1-{0}. Feature enginerring for promoter signature : {1}" . format(count, SigName))
+			sigFE.FE_run(SigName, "promoter")
+			count += 1
+		for index, row in df_filtered_nonpromoter_topics_all.iterrows():
+			SigName = row["topic_name"]
+			info("2-1-{0}. Feature enginerring for non-promoter signature : {1}" . format(count, SigName))
+			sigFE.FE_run(SigName, "nonpromoter")
+			count += 1
 
-		# info("3. Evaluation of condensation capacity of signatures ... ")
-		# if not os.path.isdir("ROC"):
-			# os.mkdir("ROC")
-		# if not os.path.isdir("XGBoost"):
-			# os.mkdir("XGBoost")
+		info("3. Evaluation of condensation capacity of signatures ... ")
+		if not os.path.isdir("ROC"):
+			os.mkdir("ROC")
+		if not os.path.isdir("XGBoost"):
+			os.mkdir("XGBoost")
 
-		# sigEval = FilterSig.SigEval(args)
-		# count = 1
-		# for index, row in df_filtered_promoter_topics_all.iterrows():
-			# SigName = row["topic_name"]
-			# info("3-1-{0}. Feature evaluation for promoter signature : {1}" . format(count, SigName))
-			# sigEval.run(SigName, "promoter")
-			# count += 1
-		# for index, row in df_filtered_nonpromoter_topics_all.iterrows():
-			# SigName = row["topic_name"]
-			# info("3-1-{0}. Feature evaluation for non-promoter signature : {1}" . format(count, SigName))
-			# sigEval.run(SigName, "nonpromoter")
-			# count += 1
+		sigEval = FilterSig.SigEval(args)
+		count = 1
+		for index, row in df_filtered_promoter_topics_all.iterrows():
+			SigName = row["topic_name"]
+			info("3-1-{0}. Feature evaluation for promoter signature : {1}" . format(count, SigName))
+			sigEval.run(SigName, "promoter")
+			count += 1
+		for index, row in df_filtered_nonpromoter_topics_all.iterrows():
+			SigName = row["topic_name"]
+			info("3-1-{0}. Feature evaluation for non-promoter signature : {1}" . format(count, SigName))
+			sigEval.run(SigName, "nonpromoter")
+			count += 1
 
 		info("4. Filter condensate-like signatures ... ")
 		if not os.path.isdir("CLSig"):

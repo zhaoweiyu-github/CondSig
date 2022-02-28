@@ -21,10 +21,14 @@ def main():
 	setup(
 		name = "CondSig",
 		version = "1.0.0",
+		author = "Zhaowei Yu",
+		author_email = "zhaoweiyu@tongji.edu.cn",
+		description = "A computation framework to predict component CAPs and genomic loci of potential chromatin-associated biomolecular condensates.",
 		package_dir = {"CondSig":"src"},
 		packages = ["CondSig"],
-		# packages = find_packages(where = "CondSig"),
-		scripts = ["bin/condsig", "bin/biterm_local.sh"]
+		scripts = ["bin/condsig", "bin/biterm_local.sh"],
+		package_data = {"CondSig":["resource/*"]},
+		install_requires = ["pandas", "numpy", "scipy", "pyBigWig", "shap", "matplotlib", "sklearn", "xgboost"]
 		)
 
 if __name__ == "__main__":
