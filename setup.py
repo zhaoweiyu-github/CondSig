@@ -27,7 +27,7 @@ def main():
 		package_dir = {"CondSig":"src"},
 		packages = ["CondSig"],
 		scripts = ["bin/condsig", "bin/biterm_local.sh"],
-		package_data = {"CondSig":["resource/*"]}
+		include_package_data = True
 		# install_requires = ["pandas", "numpy", "scipy", "shap", "matplotlib", "sklearn", "xgboost"]
 		)
 
