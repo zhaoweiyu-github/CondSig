@@ -10,11 +10,6 @@
 </p>
 
 
-
-## Documentation
-
-We are hosting CondSig documentation, instruction and tutorials at .
-
 ## Change Log
 
 ### v1.0.0
@@ -22,28 +17,36 @@ We are hosting CondSig documentation, instruction and tutorials at .
 
 ## System requirements
 * Linux/Unix
-* Python (>= 3.6) for CondSig workflow
 
 ## Install CondSig
 
 ### Installing the CondSig workflow through conda
 
-CondSig uses the [Anaconda3](http://conda.pydata.org/miniconda.html) package management system to harmonize all of the software packages. Users can install the full solution of MAESTRO using the conda environment.
+CondSig uses the [Anaconda3](http://conda.pydata.org/miniconda.html) package management system to harmonize all of the software packages. Users can install the full solution of CondSig using the conda environment.
 
 Use the following commands to install Minicoda3：
 ``` bash
-$ wget run.sh
-$ bash run.sh
+$ wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+$ bash Miniconda3-latest-Linux-x86_64.sh
 ```
 And then users can create an isolated environment for CondSig and install through the following commands:
 ``` bash
-$ conda config --add channels bioconda
-# To make the installation faster, we recommend using mamba
-$ conda install mamba -c conda-forge
-$ mamba create -n CondSig maestro=1.5.0 -c bioconda
+# Create environment for CondSig
+$ conda crate -n CondSig_env python=3.7
 # Activate the environment
-$ conda activate CondSig
+$ conda activate condsig_alpha
+# Install CondSig
+$ conda install -c yuzhaowei condsig_alpha
+```
+
+### Test CondSig
+
+```bash
+# Test CondSig command
+condsig LearnSig --help
+condsig FilterSig --help
 ```
 
 ## Citation
+
 -
