@@ -34,7 +34,7 @@ And then users can create an isolated environment for CondSig and install throug
 # Create environment for CondSig
 $ conda crate -n CondSig_env python=3.7
 # Activate the environment
-$ conda activate condsig_alpha
+$ conda activate CondSig_env
 # Install CondSig
 $ conda install -c yuzhaowei condsig_alpha
 ```
