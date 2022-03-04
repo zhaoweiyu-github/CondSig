@@ -32,7 +32,7 @@ $ bash Miniconda3-latest-Linux-x86_64.sh
 And then users can create an isolated environment for CondSig and install through the following commands:
 ``` bash
 # Create environment for CondSig
-$ conda crate -n CondSig_env python=3.7
+$ conda env crate -n CondSig_env python=3.7
 # Activate the environment
 $ conda activate CondSig_env
 # Install CondSig
