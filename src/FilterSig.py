@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
 
-"""
-Description: Filter condensate-like TR co-occupancy signatures.
-"""
 
 # ------------------------------
 #  python modules
@@ -35,6 +32,7 @@ plt.rcParams['ps.fonttype'] = 42
 #  own python modules
 # ------------------------------
 
+import CondSig
 from CondSig.BasicSetting import *
 from CondSig import Utility
 
@@ -52,7 +50,6 @@ class SigFilter():
 		self.mean_shap_threshold = 1
 		self.JI_TR_threshold = 1.0 / 3
 		self.JI_TR_top6_threshold = 1.0 / 3
-		# self.JI_sites_threshold = 1.0 / 3
 
 	def filter(self, df_filtered_topics, region):
 
@@ -69,43 +66,48 @@ class SigFilter():
 				sig_idx
 			)
 
-			XGB_file = "XGBoost/{0}_{1}_{2}_shap.txt" . format(
-				focus_TR,
-				region,
-				sig_idx
-			)
+			# XGB_file = "XGBoost/{0}_{1}_{2}_shap.txt" . format(
+			# 	focus_TR,
+			# 	region,
+			# 	sig_idx
+			# )
 
 			df_ROC = pd.read_csv(ROC_file, header = 0, sep = "\t", index_col = "feature")
-			df_XGB = pd.read_csv(XGB_file, header = 0, sep = "\t", index_col = "feature")
+			# df_XGB = pd.read_csv(XGB_file, header = 0, sep = "\t", index_col = "feature")
 
 			condensate_features = ["PPI", "RNA binding strength", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
 			condensate_features = np.intersect1d(df_ROC.index.values, condensate_features) # to avoid unavailable RNA binding strength
 			
 			roc_status = df_ROC.loc[condensate_features, "AUROC"].astype("float64")
-			xgb_status = df_XGB.loc[condensate_features, "mean_shap"].astype("float64")
+			# xgb_status = df_XGB.loc[condensate_features, "mean_shap"].astype("float64")
+			
 			# condensate-like feature positive corresponds to signatures
 			condensate_features_pos = roc_status[roc_status >= self.individual_auc_threshold].index.values
 			if len(condensate_features_pos) >= 3:
 				# top 3 condensate-like features positively respond to signature 
 				condensate_features_pos_top3 = roc_status[condensate_features_pos].nlargest(3).index.values
-				if roc_status[condensate_features_pos_top3].mean() >= self.mean_auc_threshold and xgb_status[condensate_features_pos_top3].mean() >= self.mean_shap_threshold:
-					CLsig_features_list.append([SigName, ",".join(condensate_features_pos), len(condensate_features_pos), roc_status[condensate_features_pos].mean(), xgb_status[condensate_features_pos].mean()])
+				# if roc_status[condensate_features_pos_top3].mean() >= self.mean_auc_threshold and xgb_status[condensate_features_pos_top3].mean() >= self.mean_shap_threshold:
+				# 	CLsig_features_list.append([SigName, ",".join(condensate_features_pos), len(condensate_features_pos), roc_status[condensate_features_pos].mean(), xgb_status[condensate_features_pos].mean()])
+				if roc_status[condensate_features_pos_top3].mean() >= self.mean_auc_threshold:
+					CLsig_features_list.append([SigName, ",".join(condensate_features_pos), len(condensate_features_pos), roc_status[condensate_features_pos].mean()])
 
 		df_CLsig_features = pd.DataFrame(CLsig_features_list)
-		df_CLsig_features.columns = ["signature_name", "qualified_CL_features", "qualified_CL_features_count", "mean_AUROC", "mean_feature_importance"]
+		# df_CLsig_features.columns = ["signature_name", "qualified_CL_features", "qualified_CL_features_count", "mean_AUROC", "mean_feature_importance"]
+		df_CLsig_features.columns = ["signature_name", "qualified_CL_features", "qualified_CL_features_count", "mean_AUROC"]
 		df_CLsig_features.index = df_CLsig_features.loc[:, "signature_name"].values
-		df_CLsig_features.to_csv("CLSig/{0}_{1}_nonunique_condensate_like_signatures.txt" . format(self.args.name, region), header = True, index = False, sep = "\t")
+		df_CLsig_features.to_csv("CondSig/{0}_{1}_nonunique_condensate_like_signatures.txt" . format(self.args.name, region), header = True, index = False, sep = "\t")
 		CLsigs = df_CLsig_features.loc[:, "signature_name"].values
 
 		# remove redudant condensate-like signatures
 		df_filtered_topics.index = df_filtered_topics.loc[:, "topic_name"].values
-		
 		df_filtered_topics_CLsigs = df_filtered_topics.loc[CLsigs, :]
 		# sort signatures based on topic coherence to keep the one with high topic coherence when redudant signatures are found
-		df_filtered_topics_CLsigs = df_filtered_topics_CLsigs.sort_values(by = "topic_coherence", ascending = False)
+		# df_filtered_topics_CLsigs = df_filtered_topics_CLsigs.sort_values(by = "topic_coherence", ascending = False)
+		# sort signatures based on count and level of enriched condensation features
+		df_CLsig_features_sorted = df_CLsig_features.sort_values(by = ["qualified_CL_features_count", "mean_AUROC"], ascending = False)
 
 		list_JI_sigs = []
-		for sig_i, sig_j in combinations(df_filtered_topics_CLsigs.index.values, 2):
+		for sig_i, sig_j in combinations(df_CLsig_features_sorted.index.values, 2):
 			TR_sig_i = df_filtered_topics_CLsigs.loc[sig_i, "component_word"].split(",")
 			TR_sig_j = df_filtered_topics_CLsigs.loc[sig_j, "component_word"].split(",")
 			# calculate JI between sig-i-pos TRs and sig-j-pos TRs
@@ -120,56 +122,26 @@ class SigFilter():
 			focus_TR_j = "_".join(sig_j.split("_")[:-1])
 			sig_idx_j = sig_j.split("_")[-1]
 			
-			# pos_sites_i = pd.read_csv(
-			# "{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_pos_sites.bed" . format(
-				# self.args.Sig_InputPath,
-				# focus_TR_i,
-				# region,
-				# sig_idx_i
-				# ),
-			# header = None, sep = "\t"
-			# ).iloc[:,3].values
-			# pos_sites_j = pd.read_csv(
-			# "{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_pos_sites.bed" . format(
-				# self.args.Sig_InputPath,
-				# focus_TR_j,
-				# region,
-				# sig_idx_j
-				# ),
-			# header = None, sep = "\t"
-			# ).iloc[:,3].values
-
-			# JI_sites = len(np.intersect1d(pos_sites_i, pos_sites_j)) / len(np.union1d(pos_sites_i, pos_sites_j))
-			# list_JI_sigs.append([sig_i, sig_j, JI_TR, JI_TR_top6, JI_sites])
 			list_JI_sigs.append([sig_i, sig_j, JI_TR, JI_TR_top6])
 
 		df_JI_sigs = pd.DataFrame(list_JI_sigs)
-		# df_JI_sigs.columns = ["primary", "secondary", "JI_TR", "JI_TR_top6", "JI_sites"]
 		df_JI_sigs.columns = ["primary", "secondary", "JI_TR", "JI_TR_top6"]
-
-		# redundant_sigs_JI_TR = np.unique(df_JI_sigs.loc[df_JI_sigs["JI_TR"] >= (self.JI_TR_threshold),"secondary"].values)
-		# redundant_sigs_JI_TR_top6 = np.unique(df_JI_sigs.loc[df_JI_sigs["JI_TR_top6"] >= (self.JI_TR_top6_threshold),"secondary"].values)
-		# redundant_sigs_JI_sites = np.unique(df_JI_sigs.loc[df_JI_sigs["JI_sites"] >= (self.JI_sites_threshold),"secondary"].values)
-		# redundant_sigs = np.unique(np.concatenate([redundant_sigs_JI_TR, redundant_sigs_JI_TR_top6]))
-		# redundant_sigs = redundant_sigs_JI_TR_top6
 
 		df_JI_sigs_grouped = df_JI_sigs.groupby("primary")
 		redundant_sigs = []
 		for group, df_grpup in df_JI_sigs_grouped:
 			if group not in redundant_sigs:
-				redundant_sigs += list(df_grpup.loc[df_grpup["JI_TR_top6"] >= self.JI_TR_top6_threshold, "secondary"].values)
-				# redundant_sigs += list(df_grpup.loc[df_grpup["JI_TR"] >= self.JI_TR_threshold, "secondary"].values)
-
+				redundant_sigs += list(df_grpup.loc[df_grpup["JI_TR_top6"] > self.JI_TR_top6_threshold, "secondary"].values)
 		df_unique_CLsig = df_filtered_topics_CLsigs.loc[np.setdiff1d(df_filtered_topics_CLsigs.index.values, redundant_sigs), :]
-		df_unique_CLsig_featues = df_CLsig_features.loc[df_unique_CLsig.index.values, ["qualified_CL_features", "qualified_CL_features_count", "mean_AUROC", "mean_feature_importance"]]
+		# df_unique_CLsig_featues = df_CLsig_features.loc[df_unique_CLsig.index.values, ["qualified_CL_features", "qualified_CL_features_count", "mean_AUROC", "mean_feature_importance"]]
+		df_unique_CLsig_featues = df_CLsig_features.loc[df_unique_CLsig.index.values, ["qualified_CL_features", "qualified_CL_features_count", "mean_AUROC"]]
 
 		df_unique_CLsig_anno = pd.concat([df_unique_CLsig, df_unique_CLsig_featues], axis = 1)
 		df_unique_CLsig_anno = df_unique_CLsig_anno.sort_values(by = ["qualified_CL_features_count", "mean_AUROC"], ascending = False)
-		df_unique_CLsig_anno.columns = ['signature_name', 'component_TR', 'topic_coherence', 'qualified_CL_features',
-       'qualified_CL_features_count', 'mean_AUROC', 'mean_feature_importance']
-		df_unique_CLsig_anno.to_csv("CLSig/{0}_{1}_unique_condensate_like_signatures.txt" . format(self.args.name, region), header = True, index = False, sep = "\t")
-
-		# return(df_unique_CLsig_anno)
+		# df_unique_CLsig_anno.columns = ['signature_name', 'component_CAP', 'qualified_CL_features', 'qualified_CL_features_count', 'mean_AUROC', 'mean_feature_importance']
+		df_unique_CLsig_anno.columns = ['signature_name', 'component_CAP', 'qualified_CL_features', 'qualified_CL_features_count', 'mean_AUROC']
+		
+		df_unique_CLsig_anno.to_csv("CondSig/{0}_{1}_unique_condensate_like_signatures.txt" . format(self.args.name, region), header = True, index = False, sep = "\t")
 
 
 class SigEval():
@@ -197,10 +169,10 @@ class SigEval():
 
 
 		# balance the number of signature-positive and -negative sites
-		if round(df_sig_neg_FE.shape[0] / df_sig_pos_FE.shape[0]) > 1:
-			df_sig_pos_FE = pd.concat([df_sig_pos_FE] * round(df_sig_neg_FE.shape[0] / df_sig_pos_FE.shape[0]), ignore_index = True)
-		elif round(df_sig_pos_FE.shape[0] / df_sig_neg_FE.shape[0]) > 1:
-			df_sig_neg_FE = pd.concat([df_sig_neg_FE] * round(df_sig_pos_FE.shape[0] / df_sig_neg_FE.shape[0]), ignore_index = True)
+		# if round(df_sig_neg_FE.shape[0] / df_sig_pos_FE.shape[0]) > 1:
+		# 	df_sig_pos_FE = pd.concat([df_sig_pos_FE] * round(df_sig_neg_FE.shape[0] / df_sig_pos_FE.shape[0]), ignore_index = True)
+		# elif round(df_sig_pos_FE.shape[0] / df_sig_neg_FE.shape[0]) > 1:
+		# 	df_sig_neg_FE = pd.concat([df_sig_neg_FE] * round(df_sig_pos_FE.shape[0] / df_sig_neg_FE.shape[0]), ignore_index = True)
 
 		df_sig_pos_FE.loc[:, "label"] = True
 		df_sig_neg_FE.loc[:, "label"] = False
@@ -212,13 +184,11 @@ class SigEval():
 		y = df_sig_merged_FE.loc[:, "label"]
 
 		self.roc_analysis(X, y, focus_TR, region, sig_idx)
-		self.XGB_analysis(X, y, focus_TR, region, sig_idx)
+		# self.XGB_analysis(X, y, focus_TR, region, sig_idx)
 
 	def roc_analysis(self, X, y, focus_TR, region, sig_idx):
 		"""perform ROC analysis for features in X to label y"""
 		
-		fig, ax1 = plt.subplots(figsize = (4.5,4), nrows = 1, ncols = 1)
-
 		# calculate AUROC and plot ROC curve
 		list_auc = []
 		for feature in X.columns:
@@ -245,8 +215,10 @@ class SigEval():
 			), header = True, sep = "\t", index = False)
 
 		# plot bar plot for auc
+		logging.getLogger().setLevel(logging.ERROR)
+		fig, ax1 = plt.subplots(figsize = (4.5,4), nrows = 1, ncols = 1)
 		mycmap = cm.get_cmap("viridis")
-		ax1.barh(df_auc.loc[:, "feature"], df_auc.loc[:, "AUROC"], color = mycmap(df_auc.loc[:, "AUROC"]), height = 0.7)
+		_bar = ax1.barh(df_auc.loc[:, "feature"], df_auc.loc[:, "AUROC"], color = mycmap(df_auc.loc[:, "AUROC"]), height = 0.7)
 		ax1.axvline(x = 0.6, linestyle = "--", color = "grey", linewidth = 1.5)
 		ax1.set_xlabel("AUROC")
 		ax1.set_title("AUROC")
@@ -258,6 +230,7 @@ class SigEval():
 				region,
 				sig_idx))
 		plt.close()
+		logging.getLogger().setLevel(logging.INFO)
 
 	def XGB_analysis(self, X, y, focus_TR, region, sig_idx):
 		"""calculate feature importance"""
@@ -317,12 +290,12 @@ class SigFE():
 		self.df_MLO = pd.read_csv(self.args.MLO, header = 0, sep = "\t").dropna()
 		self.df_PPI_merged = pd.read_csv(self.args.PPI, header = 0, sep = "\t")
 
-		self.tss_file = self.args.genome_annotation.TSS_file
+		# self.tss_file = self.args.genome_annotation.TSS_file
 		
-		self.df_dataset = pd.read_csv(self.args.data_annotation, header = None, sep = "\t")
-		self.df_dataset.columns = ["factor", "label", "file", "uniprot_id", "uniprot_entry"]
+		self.df_dataset = pd.read_csv(self.args.data_annotation, header = None, sep = "\t").iloc[:,0:4]
+		self.df_dataset.columns = ["factor", "label", "file", "uniprot_id"]
 		self.df_dataset.index = self.df_dataset.loc[:, "label"].values
-		self.df_dataset.loc[:, "uniprot_entry"] = self.df_dataset.loc[:, "uniprot_entry"].str.upper()
+		
 
 	def FE_preprocess(self):
 
@@ -330,33 +303,33 @@ class SigFE():
 		
 		# genearate motif presence matrix
 		# info("1-1. Generate motif presence matrix ... ")
-		motif_path = self.args.motif
-		motif_factor_uid_file = "motif_factor_uids_edited.txt"
-		if not os.path.isfile("{0}/{1}".format(motif_path, motif_factor_uid_file)):
-			error("No annotation file in motif path: {0}/{1}" . format(motif_path, motif_factor_uid_file))
-			sys.exit(0)
-		df_motif_factor_uid = pd.read_csv("{0}/{1}".format(motif_path, motif_factor_uid_file), header = None, sep = "\t", encoding='latin-1').iloc[:, 0:4]
-		df_motif_factor_uid.columns = ["factor", "label", "uniprot_id", "uniprot_entry"]
-		df_motif_factor_uid.loc[:, "uniprot_id"] = df_motif_factor_uid.loc[:, "uniprot_id"].str.upper()
 		
-		df_motif_factor_uid_dataset = df_motif_factor_uid.loc[df_motif_factor_uid["uniprot_id"].isin(self.df_dataset.loc[:, "uniprot_id"].values), :].copy() # only motifs in dataset annotation were selected 
-		df_motif_factor_uid_dataset.loc[:, "file"] = ["{0}/filtered_results/{1}".format(motif_path, motif_label) for motif_label in df_motif_factor_uid_dataset.loc[:, "label"].values]
+		# motif_path = self.args.motif
+		# motif_factor_uid_file = "motif_factor_uids_edited.txt"
+		# if not os.path.isfile("{0}/{1}".format(motif_path, motif_factor_uid_file)):
+		# 	error("No annotation file in motif path: {0}/{1}" . format(motif_path, motif_factor_uid_file))
+		# 	sys.exit(0)
+		# df_motif_factor_uid = pd.read_csv("{0}/{1}".format(motif_path, motif_factor_uid_file), header = None, sep = "\t", encoding='latin-1').iloc[:, 0:4]
+		# df_motif_factor_uid.columns = ["factor", "label", "uniprot_id", "uniprot_entry"]
+		# df_motif_factor_uid.loc[:, "uniprot_id"] = df_motif_factor_uid.loc[:, "uniprot_id"].str.upper()
+		
+		# df_motif_factor_uid_dataset = df_motif_factor_uid.loc[df_motif_factor_uid["uniprot_id"].isin(self.df_dataset.loc[:, "uniprot_id"].values), :].copy() # only motifs in dataset annotation were selected 
+		# df_motif_factor_uid_dataset.loc[:, "file"] = ["{0}/filtered_results/{1}".format(motif_path, motif_label) for motif_label in df_motif_factor_uid_dataset.loc[:, "label"].values]
 
-		motifov_bed = Utility.Motif_OverlapMatrix(df_motif_factor_uid_dataset, self.args).intervals_intersect_genomewide_bins()
-		# motifov_bed = "mESC_1kb_bins_motifov.bed"
-		df_motif_dataset = pd.read_csv(motifov_bed, header = 0, sep = "\t", index_col = "name").iloc[:, 3:]
-		df_motif_dataset[df_motif_dataset > 1] = 1
+		# motifov_bed = Utility.Motif_OverlapMatrix(df_motif_factor_uid_dataset, self.args).intervals_intersect_genomewide_bins()
+		# df_motif_dataset = pd.read_csv(motifov_bed, header = 0, sep = "\t", index_col = "name").iloc[:, 3:]
+		# df_motif_dataset[df_motif_dataset > 1] = 1
 		
-		motifov_uid_list = []
-		uid_list = []
-		for uid in np.unique(df_motif_factor_uid_dataset.loc[:, "uniprot_id"].values):
-			motif_labels = df_motif_factor_uid_dataset.loc[df_motif_factor_uid_dataset["uniprot_id"] == uid, "label"] # a uniprot id may be responsible for multiple labels (multiple files for the same factor)
-			motifov_uid = df_motif_dataset.loc[:, motif_labels].max(axis = 1) # if any one motif file show co-binding, the factor was denoted to be motif occurrence
-			motifov_uid_list.append(motifov_uid)
-			uid_list.append(uid)
-		df_motif_dataset_labeled = pd.DataFrame(motifov_uid_list).T
-		df_motif_dataset_labeled.columns = uid_list
-		self.df_motif_dataset_labeled = df_motif_dataset_labeled
+		# motifov_uid_list = []
+		# uid_list = []
+		# for uid in np.unique(df_motif_factor_uid_dataset.loc[:, "uniprot_id"].values):
+		# 	motif_labels = df_motif_factor_uid_dataset.loc[df_motif_factor_uid_dataset["uniprot_id"] == uid, "label"] # a uniprot id may be responsible for multiple labels (multiple files for the same factor)
+		# 	motifov_uid = df_motif_dataset.loc[:, motif_labels].max(axis = 1) # if any one motif file show co-binding, the factor was denoted to be motif occurrence
+		# 	motifov_uid_list.append(motifov_uid)
+		# 	uid_list.append(uid)
+		# df_motif_dataset_labeled = pd.DataFrame(motifov_uid_list).T
+		# df_motif_dataset_labeled.columns = uid_list
+		# self.df_motif_dataset_labeled = df_motif_dataset_labeled
 
 		# protein-protein interaction between proteins of dataset (to reduce the execution time of FE run)
 		df_PPI_dataset = self.df_PPI_merged.loc[
@@ -368,7 +341,7 @@ class SigFE():
 		self.df_PPI_dataset = df_PPI_dataset
 
 		# disordered domain content
-		disorder_content_cutoff = 0.155 # 10% quantile of LLPS-proteins with ChIP-seq data in human K562
+		disorder_content_cutoff = 0.153 # determined by IDR percentage of LLPS proteins in human
 		df_mobidb_lite = pd.read_csv(self.args.IDR, header = None, sep = "\t")
 		df_mobidb_lite.columns = ["uniprot_id", "disorder_content"]
 		df_mobidb_lite.loc[:, "uniprot_id"] = df_mobidb_lite.loc[:, "uniprot_id"].str.upper()
@@ -431,65 +404,62 @@ class SigFE():
 
 		
 		# chromatin accessiblity
-		CA_pos = self.CA_FE(df_peaks_sig_pos, self.args.accessibility, self.args.threads)
-		CA_neg = self.CA_FE(df_peaks_sig_neg, self.args.accessibility, self.args.threads)
+		# CA_pos = self.CA_FE(df_peaks_sig_pos, self.args.accessibility, self.args.threads)
+		# CA_neg = self.CA_FE(df_peaks_sig_neg, self.args.accessibility, self.args.threads)
 
 		# distance to TSS
-		cmd_pos = "bedtools closest -d -t first -a {0} -b {1} | cut -f 10" . format("{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_pos_sites.bed" . format(self.args.Sig_InputPath,
-				focus_TR,
-				region,
-				sig_idx), self.tss_file)
-		cmd_neg = "bedtools closest -d -t first -a {0} -b {1} | cut -f 10" . format("{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_neg_sites.bed" . format(self.args.Sig_InputPath,
-				focus_TR,
-				region,
-				sig_idx), self.tss_file)
+		# cmd_pos = "bedtools closest -d -t first -a {0} -b {1} | cut -f 10" . format("{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_pos_sites.bed" . format(self.args.Sig_InputPath,
+		# 		focus_TR,
+		# 		region,
+		# 		sig_idx), self.tss_file)
+		# cmd_neg = "bedtools closest -d -t first -a {0} -b {1} | cut -f 10" . format("{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_neg_sites.bed" . format(self.args.Sig_InputPath,
+		# 		focus_TR,
+		# 		region,
+		# 		sig_idx), self.tss_file)
 
-		# info(cmd_pos)
-		p_pos = subprocess.Popen(
-		  cmd_pos, 
-		  stdout = subprocess.PIPE,
-		  stderr = subprocess.PIPE,
-			shell = "True")
-		(stdoutdata_pos, stderrdata_pos) = p_pos.communicate()
-		exit_code = p_pos.returncode
-		# info(exit_code)
-		distance_pos = list(map(int, stdoutdata_pos.decode().split("\n")[:-1]))
-		add_sudocount = lambda x:x+1
-		distance_pos = list(map(add_sudocount, distance_pos))
-		distance_pos_log10 = -np.log10(distance_pos)
+		
+		# p_pos = subprocess.Popen(
+		#   cmd_pos, 
+		#   stdout = subprocess.PIPE,
+		#   stderr = subprocess.PIPE,
+		# 	shell = "True")
+		# (stdoutdata_pos, stderrdata_pos) = p_pos.communicate()
+		# exit_code = p_pos.returncode
+		# distance_pos = list(map(int, stdoutdata_pos.decode().split("\n")[:-1]))
+		# add_sudocount = lambda x:x+1
+		# distance_pos = list(map(add_sudocount, distance_pos))
+		# distance_pos_log10 = -np.log10(distance_pos)
 
-		p_neg = subprocess.Popen(
-		  cmd_neg, 
-		  stdout = subprocess.PIPE,
-		  stderr = subprocess.PIPE,
-			shell = "True")
-		(stdoutdata_neg, stderrdata_neg) = p_neg.communicate()
-		exit_code = p_neg.returncode
-		distance_neg = list(map(int, stdoutdata_neg.decode().split("\n")[:-1]))
-		distance_neg = list(map(add_sudocount, distance_neg))
-		distance_neg_log10 = -np.log10(distance_neg)
+		# p_neg = subprocess.Popen(
+		#   cmd_neg, 
+		#   stdout = subprocess.PIPE,
+		#   stderr = subprocess.PIPE,
+		# 	shell = "True")
+		# (stdoutdata_neg, stderrdata_neg) = p_neg.communicate()
+		# exit_code = p_neg.returncode
+		# distance_neg = list(map(int, stdoutdata_neg.decode().split("\n")[:-1]))
+		# distance_neg = list(map(add_sudocount, distance_neg))
+		# distance_neg_log10 = -np.log10(distance_neg)
 
 		df_peakov_sig_pos_uids_splits = np.array_split(df_peakov_sig_pos_uids, self.args.threads)
 		df_peakov_sig_neg_uids_splits = np.array_split(df_peakov_sig_neg_uids, self.args.threads)
 
 		# motif presence
-		focused_motif_uid = np.intersect1d(df_peakov_sig_pos_uids.columns.values, self.df_motif_dataset_labeled.columns.values)
-		df_motif_sig_pos = self.df_motif_dataset_labeled.loc[pos_sites, focused_motif_uid].copy()
-		df_motif_sig_neg = self.df_motif_dataset_labeled.loc[neg_sites, focused_motif_uid].copy()
+		# focused_motif_uid = np.intersect1d(df_peakov_sig_pos_uids.columns.values, self.df_motif_dataset_labeled.columns.values)
+		# df_motif_sig_pos = self.df_motif_dataset_labeled.loc[pos_sites, focused_motif_uid].copy()
+		# df_motif_sig_neg = self.df_motif_dataset_labeled.loc[neg_sites, focused_motif_uid].copy()
 		
-		pool = multiprocessing.Pool(self.args.threads)
-		# info(df_motif_sig_pos.head())
-		# info(df_peakov_sig_pos_uids_splits)
-		func_motif_pos = partial(motif_frequency_cal, df_motif_sig_pos)
-		motif_frequency_pos = np.concatenate(pool.map(func_motif_pos, df_peakov_sig_pos_uids_splits))
-		pool.close()
-		pool.join()
+		# pool = multiprocessing.Pool(self.args.threads)
+		# func_motif_pos = partial(motif_frequency_cal, df_motif_sig_pos)
+		# motif_frequency_pos = np.concatenate(pool.map(func_motif_pos, df_peakov_sig_pos_uids_splits))
+		# pool.close()
+		# pool.join()
 
-		pool = multiprocessing.Pool(self.args.threads)
-		func_motif_neg = partial(motif_frequency_cal, df_motif_sig_neg)
-		motif_frequency_neg = np.concatenate(pool.map(func_motif_neg, df_peakov_sig_neg_uids_splits))
-		pool.close()
-		pool.join()
+		# pool = multiprocessing.Pool(self.args.threads)
+		# func_motif_neg = partial(motif_frequency_cal, df_motif_sig_neg)
+		# motif_frequency_neg = np.concatenate(pool.map(func_motif_neg, df_peakov_sig_neg_uids_splits))
+		# pool.close()
+		# pool.join()
 
 		# protein-protein interaction frequency
 		func_PPI = partial(PPI_frequency_cal, self.df_PPI_dataset)
@@ -558,9 +528,9 @@ class SigFE():
 			RNA_neg = self.RNA_FE(df_peaks_sig_neg, self.args.RBS, self.args.threads)
 
 			df_sig_pos_FE = pd.concat([df_peaks_sig_pos, 
-				pd.DataFrame(CA_pos), 
-				pd.DataFrame(motif_frequency_pos, index = df_peakov_sig_pos_uids.index.values), 
-				pd.DataFrame(distance_pos_log10, index = df_peakov_sig_pos_uids.index.values), 
+				# pd.DataFrame(CA_pos), 
+				# pd.DataFrame(motif_frequency_pos, index = df_peakov_sig_pos_uids.index.values), 
+				# pd.DataFrame(distance_pos_log10, index = df_peakov_sig_pos_uids.index.values), 
 				pd.DataFrame(PPI_frequency_pos, index = df_peakov_sig_pos_uids.index.values),
 				pd.DataFrame(RNA_pos),
 				pd.DataFrame(LLPS_frequency_pos, index = df_peakov_sig_pos_uids.index.values),
@@ -570,12 +540,13 @@ class SigFE():
 				], axis = 1)
 
 			df_sig_pos_FE.index = df_peaks_sig_pos.index.values
-			df_sig_pos_FE.columns = ["chrom", "start", "end", "Chromatin accessibility", "Motif presence", "Proximity to TSS", "PPI", "RNA binding strength", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
+			# df_sig_pos_FE.columns = ["chrom", "start", "end", "Chromatin accessibility", "Motif presence", "Proximity to TSS", "PPI", "RNA binding strength", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
+			df_sig_pos_FE.columns = ["chrom", "start", "end", "PPI", "RNA binding strength", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
 
 			df_sig_neg_FE = pd.concat([df_peaks_sig_neg, 
-				pd.DataFrame(CA_neg), 
-				pd.DataFrame(motif_frequency_neg, index = df_peakov_sig_neg_uids.index.values), 
-				pd.DataFrame(distance_neg_log10, index = df_peakov_sig_neg_uids.index.values), 
+				# pd.DataFrame(CA_neg), 
+				# pd.DataFrame(motif_frequency_neg, index = df_peakov_sig_neg_uids.index.values), 
+				# pd.DataFrame(distance_neg_log10, index = df_peakov_sig_neg_uids.index.values), 
 				pd.DataFrame(PPI_frequency_neg, index = df_peakov_sig_neg_uids.index.values),
 				pd.DataFrame(RNA_neg),
 				pd.DataFrame(LLPS_frequency_neg, index = df_peakov_sig_neg_uids.index.values),
@@ -585,7 +556,7 @@ class SigFE():
 				], axis = 1)
 
 			df_sig_neg_FE.index = df_peaks_sig_neg.index.values
-			df_sig_neg_FE.columns = ["chrom", "start", "end", "Chromatin accessibility", "Motif presence", "Proximity to TSS", "PPI", "RNA binding strength", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
+			df_sig_neg_FE.columns = ["chrom", "start", "end", "PPI", "RNA binding strength", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
 
 			df_sig_pos_FE.to_csv("Features/{0}_{1}_{2}_pos_FE.txt" . format(
 				focus_TR,
@@ -600,9 +571,9 @@ class SigFE():
 		# without RNA binding strength
 		else:
 			df_sig_pos_FE = pd.concat([df_peaks_sig_pos, 
-				pd.DataFrame(CA_pos), 
-				pd.DataFrame(motif_frequency_pos, index = df_peakov_sig_pos_uids.index.values), 
-				pd.DataFrame(distance_pos_log10, index = df_peakov_sig_pos_uids.index.values), 
+				# pd.DataFrame(CA_pos), 
+				# pd.DataFrame(motif_frequency_pos, index = df_peakov_sig_pos_uids.index.values), 
+				# pd.DataFrame(distance_pos_log10, index = df_peakov_sig_pos_uids.index.values), 
 				pd.DataFrame(PPI_frequency_pos, index = df_peakov_sig_pos_uids.index.values),
 				pd.DataFrame(LLPS_frequency_pos, index = df_peakov_sig_pos_uids.index.values),
 				pd.DataFrame(MLO_frequency_pos, index = df_peakov_sig_pos_uids.index.values),
@@ -611,12 +582,12 @@ class SigFE():
 				], axis = 1)
 
 			df_sig_pos_FE.index = df_peaks_sig_pos.index.values
-			df_sig_pos_FE.columns = ["chrom", "start", "end", "Chromatin accessibility", "Motif presence", "Proximity to TSS", "PPI", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
+			df_sig_pos_FE.columns = ["chrom", "start", "end", "PPI", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
 
 			df_sig_neg_FE = pd.concat([df_peaks_sig_neg, 
-				pd.DataFrame(CA_neg), 
-				pd.DataFrame(motif_frequency_neg, index = df_peakov_sig_neg_uids.index.values), 
-				pd.DataFrame(distance_neg_log10, index = df_peakov_sig_neg_uids.index.values), 
+				# pd.DataFrame(CA_neg), 
+				# pd.DataFrame(motif_frequency_neg, index = df_peakov_sig_neg_uids.index.values), 
+				# pd.DataFrame(distance_neg_log10, index = df_peakov_sig_neg_uids.index.values), 
 				pd.DataFrame(PPI_frequency_neg, index = df_peakov_sig_neg_uids.index.values),
 				pd.DataFrame(LLPS_frequency_neg, index = df_peakov_sig_neg_uids.index.values),
 				pd.DataFrame(MLO_frequency_neg, index = df_peakov_sig_neg_uids.index.values),
@@ -625,7 +596,7 @@ class SigFE():
 				], axis = 1)
 
 			df_sig_neg_FE.index = df_peaks_sig_neg.index.values
-			df_sig_neg_FE.columns = ["chrom", "start", "end", "Chromatin accessibility", "Motif presence", "Proximity to TSS", "PPI", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
+			df_sig_neg_FE.columns = ["chrom", "start", "end", "PPI", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
 
 			df_sig_pos_FE.to_csv("Features/{0}_{1}_{2}_pos_FE.txt" . format(
 				focus_TR,

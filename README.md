@@ -1,7 +1,7 @@
 # CondSig
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Version: 1.1.0](https://img.shields.io/badge/Version-1.0.0-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 **CondSig** (**Cond**ensate-like chromatin-associated proteins co-occupancy **Sig**nature) is a comprehensive computational framework to predict component CAPs (chromatin-associated proteins) and genomic loci of potential chromatin-associated biomolecular condensates. The computation framework first detect genome-wide CAP collaborations in specific loci by integrating ChIP-seq datasets and then screen out some may be involved in biomolecular condensation based on known condensation characteristics.
 
@@ -12,7 +12,7 @@
 
 ## Change Log
 
-### v1.0.0
+### v1.1.0
 * Release CondSig.
 
 ## System requirements
@@ -36,7 +36,7 @@ $ conda create -n CondSig_env python=3.7
 # Activate the environment
 $ conda activate CondSig_env
 # Install CondSig
-$ conda install -c yuzhaowei condsig_alpha
+$ conda install -c bioconda -c yuzhaowei condsig_detector
 ```
 
 ### Test CondSig

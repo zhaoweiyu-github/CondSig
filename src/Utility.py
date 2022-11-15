@@ -32,6 +32,7 @@ plt.rcParams['ps.fonttype'] = 42
 #  own python modules
 # ------------------------------
 
+import CondSig
 from CondSig.BasicSetting import *
 
 # ------------------------------
@@ -98,12 +99,12 @@ class BuildBTM():
 
 		# run BTM
 		info("2-{0}-2. Run biterm topic model on focus context (promoter) ... " . format(self.count))
-		btm_promoter = "bash /mnt/Storage/home/yuzhaowei/projects/Factor.Harbor/software/CondSig/scripts/biterm_local.sh {0} {1} {2} {3} {4} {5} > {4}/{0}_promoter.log" . format(
+		btm_promoter = "biterm_run {0} {1} {2} {3} {4} {5} > {4}/{0}_promoter.log" . format(
 			self.focus_TR, self.args.min_signatures, self.args.max_signatures, vocab_size_promoter, self.outpath, "promoter")
 		subprocess.run(btm_promoter, shell = True, check = True)
 
 		info("2-{0}-3. Run biterm topic model on focus context (non-promoter) ... " . format(self.count))
-		btm_nonpromoter = "bash /mnt/Storage/home/yuzhaowei/projects/Factor.Harbor/software/CondSig/scripts/biterm_local.sh {0} {1} {2} {3} {4} {5} > {4}/{0}_nonpromoter.log" . format(
+		btm_nonpromoter = "biterm_run {0} {1} {2} {3} {4} {5} > {4}/{0}_nonpromoter.log" . format(
 			self.focus_TR, self.args.min_signatures, self.args.max_signatures, vocab_size_nonpromoter, self.outpath, "nonpromoter")
 		subprocess.run(btm_nonpromoter, shell = True, check = True)
 
@@ -132,7 +133,7 @@ class BuildBTM():
 
 
 	def interpret_biterm_topic_contents(self, region, topic_number):
-		"""interpret biterm topic model to topics containging topN words"""
+		"""interpret biterm topic model to topics containing topN words"""
 
 		# all vocab in corpus
 		df_vocab = pd.read_csv("{0}/{1}_{2}_voca.txt".format(self.outpath, self.focus_TR, region), header = None, sep = "\t")
@@ -216,7 +217,7 @@ class BuildBTM():
 			topic_neg_peaks = np.intersect1d(df_topic_neg_peaks_ov.index.values, df_topic_neg_peaks_wo_pos.index.values)
 
 			## write topic positive and negative site to bed file
-			if len(topic_pos_peaks) >= 200 and len(topic_neg_peaks) >= 200 and len(topic_pos_word) >= 2:
+			if len(topic_pos_peaks) >= 200 and len(topic_neg_peaks) >= 200 and len(topic_pos_word) >= 3:
 
 				df_peakov_raw_topic_pos = self.df_peakov_raw.loc[topic_pos_peaks, ["chrom", "start", "end"]]
 				df_peakov_raw_topic_neg = self.df_peakov_raw.loc[topic_neg_peaks, ["chrom", "start", "end"]]
@@ -229,8 +230,10 @@ class BuildBTM():
 				df_peakov_raw_topic_pos_sorted.to_csv("{0}/{1}/{2}_{1}_{3}_pos_sites.bed".format(self.outpath, region, self.focus_TR, topic_name), header = False, sep = "\t", index = False)
 				df_peakov_raw_topic_neg_sorted.to_csv("{0}/{1}/{2}_{1}_{3}_neg_sites.bed".format(self.outpath, region, self.focus_TR, topic_name), header = False, sep = "\t", index = False)
 
-				topic_coherence = self.topic_coherence_cal(topic_pos_word)
-				filtered_topics.append(["{0}_{1}" . format(self.focus_TR, topic_name), ",".join(topic_pos_word), topic_coherence])
+				# topic_coherence = self.topic_coherence_cal(topic_pos_word)
+				# filtered_topics.append(["{0}_{1}" . format(self.focus_TR, topic_name), ",".join(topic_pos_word), topic_coherence])
+
+				filtered_topics.append(["{0}_{1}" . format(self.focus_TR, topic_name), ",".join(topic_pos_word)])
 
 
 		df_topics = pd.DataFrame(topics)
@@ -238,7 +241,7 @@ class BuildBTM():
 
 		df_filtered_topics = pd.DataFrame(filtered_topics)
 		if not df_filtered_topics.empty:
-			df_filtered_topics.columns = ["topic_name", "component_word", "topic_coherence"]
+			df_filtered_topics.columns = ["topic_name", "component_word"]
 			df_filtered_topics.to_csv("{0}/{1}_{2}_filtered_topics_contents.txt".format(self.outpath, self.focus_TR, region), header = True, index = False, sep = "\t")
 
 		return(df_topics, df_filtered_topics)
@@ -261,6 +264,7 @@ class BuildBTM():
 
 	def plot_biterm_topic_contents(self, df_topics, region):
 
+		logging.getLogger().setLevel(logging.ERROR)
 		fig, axs = plt.subplots(figsize = (4 * df_topics.shape[0], 4 ), nrows = 1, ncols = df_topics.shape[0])
 		mycmap = cm.get_cmap("viridis")
 		
@@ -271,7 +275,7 @@ class BuildBTM():
 			probs_normalize = (probs - np.min(probs)) / (np.max(probs) - np.min(probs))
 			my_color = mycmap(probs_normalize)
 			ax = axs[i]
-			ax.barh(TRs[::-1], probs[::-1], color = my_color[::-1])
+			_bar = ax.barh(TRs[::-1], probs[::-1], color = my_color[::-1])
 			ax.axvline(x = self.args.zscore, linestyle = "--", color = "grey", linewidth = 1.5)
 			ax.set_xlabel("Probability of CAPs (z-score)")
 			ax.set_title("{0}-{1}" . format(region, topic_name))
@@ -279,6 +283,7 @@ class BuildBTM():
 		plt.subplots_adjust(wspace = 0.4, left = 0.15, right = 0.85, bottom = 0.15)
 		plt.savefig("{0}/{1}_{2}_raw_topics_contents.pdf".format(self.outpath, self.focus_TR, region))
 		plt.close()
+		logging.getLogger().setLevel(logging.INFO)
 
 
 	def determine_optimal_topic_number(self, region):
@@ -308,14 +313,14 @@ class BuildBTM():
 
 
 class GF1Calculation():
-	"""Calculate generalized F1 score for TR pairs"""
+	"""Calculate generalized F1 score for CAP pairs"""
 	
 	def __init__(self, df_peakov_filtered, args):
 		self.df_peakov_filtered = df_peakov_filtered
 		self.n_cpus = args.threads
 
 	def gF1_cal(self, word_j, word_k):
-		"""calculate generalized F1 score for single TR pairs"""
+		"""calculate generalized F1 score for single CAP pairs"""
 		TP = sum((self.df_peakov_filtered[word_j]>0) & (self.df_peakov_filtered[word_k]>0))
 		FP = sum((self.df_peakov_filtered[word_j]==0) & (self.df_peakov_filtered[word_k]>0))
 		FN = sum((self.df_peakov_filtered[word_j]>0) & (self.df_peakov_filtered[word_k]==0))
@@ -327,20 +332,20 @@ class GF1Calculation():
 			gF1 = 0
 		return(gF1)
 
-	def cal_focus(self, focus_TR):
-		"""calculate generalized F1 score for pairs between focus TR and all TRs. 
+	def cal_focus(self, focus_CAP):
+		"""calculate generalized F1 score for pairs between focus CAP and all CAPs. 
 		TR name should be 'label' but not 'factor'."""
 		
 		gF1_list = []
-		gF1s = [self.gF1_cal(focus_TR, TR) for TR in self.df_peakov_filtered.columns.values]
+		gF1s = [self.gF1_cal(focus_CAP, CAP) for CAP in self.df_peakov_filtered.columns.values]
 		gF1_list.append(gF1s)
 		df_gF1s = pd.DataFrame(gF1_list)
-		df_gF1s.index = [focus_TR]
+		df_gF1s.index = [focus_CAP]
 		df_gF1s.columns = self.df_peakov_filtered.columns.values
 		return(df_gF1s)
 
 class OccupancyMatrix():
-	"""Generate occupancy matrix for all TRs at genome-wide bins"""
+	"""Generate occupancy matrix for all CAPs at genome-wide bins"""
 	
 	def __init__(self, genome_bins_file, df_dataset, output_prefix, args):
 		
@@ -360,7 +365,7 @@ class OccupancyMatrix():
 			cmd += "bedtools intersect -c -e -f 0.5 -F 0.5 -a - -b {0} | " . format(self.df_dataset.loc[self.df_dataset["label"] == self.all_factor_label[i], "file"].values[0])
 		cmd += "bedtools intersect -c -e -f 0.5 -F 0.5 -a - -b {0} | " . format(self.df_dataset.loc[self.df_dataset["label"] == self.all_factor_label[-1], "file"].values[0])
 		cmd += """awk '{OFS=FS="\\t"}{for(i=5;i<=NF;i++){$i=($i>1?1:$i)};print $0}' - > %s_chunk%s_raw.bed && """ %(self.output_prefix, split_bins_file_index) # convert overlap count > 1 to 1
-		cmd += """awk '{OFS=FS="\\t"}{sum=0;for(i=5; i<=NF; i++){sum+=$i};if(sum>=1)print $0}' %s_chunk%s_raw.bed > %s_chunk%s.bed && rm %s_chunk%s_raw.bed & \n""" %(self.output_prefix, split_bins_file_index, self.output_prefix, split_bins_file_index, self.output_prefix, split_bins_file_index) # remove bins without any TR occupancy
+		cmd += """awk '{OFS=FS="\\t"}{sum=0;for(i=5; i<=NF; i++){sum+=$i};if(sum>=1)print $0}' %s_chunk%s_raw.bed > %s_chunk%s.bed && rm %s_chunk%s_raw.bed & \n""" %(self.output_prefix, split_bins_file_index, self.output_prefix, split_bins_file_index, self.output_prefix, split_bins_file_index) # remove bins without any CAP occupancy
 		# info(cmd)
 		
 		return(cmd)
@@ -373,7 +378,7 @@ class OccupancyMatrix():
 		outf_peakov.write(header)
 		outf_peakov.close()
 
-		# split genome-wide bins to sub files for calculating occupancy matrix in parallel
+		# split genome-wide bins to sub files for calculating occupancy matrix in parallel (not work in macOS)
 		cmd_split_bins = "split --additional-suffix _{0} -n l/{1} -d {2}" . format(self.output_prefix, self.args.threads, self.genome_bins_file, self.args.out_dir) # split genome-wide bins to multiple files
 		subprocess.run(cmd_split_bins, shell = True, check = True)
 		split_bins_files = [i for i in os.listdir(os.getcwd()) if i.endswith(self.output_prefix)]
