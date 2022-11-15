@@ -184,7 +184,7 @@ def add_FilterSig_parser(subparsers):
 
 	# group_input.add_argument( "--Accessibility", dest = "accessibility", type = str, required = True, help = "Big wiggle track of chromatin accessibility. REQUIRED." )
 	# group_input.add_argument( "--Motif", dest = "motif", type = str, required = True, help = "Motif path containing all bed files of motif-presence sites. REQUIRED." )
-	group_input.add_argument( "--GenomeVersion", dest = "genome_version", type = str, default = "hg38", help = "The genome version of peak file. Default:hg38." )
+	# group_input.add_argument( "--GenomeVersion", dest = "genome_version", type = str, default = "hg38", help = "The genome version of peak file. Default:hg38." )
 
 	group_input.add_argument( "--Threads", dest = "threads", type = int, default = 8, help = "The processes used of the job. Default:8." )
 
@@ -212,7 +212,7 @@ def add_LearnSig_parser(subparsers):
 
 	group_input.add_argument( "--Threads", dest = "threads", type = int, default = 8, help = "The processes used of the job. Default:8." )
 
-	# group_input.add_argument( "--GenomeVersion", dest = "genome_version", type = str, default = "hg38", help = "The genome version of peak file. Default:hg38." )
+	group_input.add_argument( "--GenomeVersion", dest = "genome_version", type = str, default = "hg38", help = "The genome version of peak file. Default:hg38." )
 
 	# group for output files
 	group_output = argparser_LearnSig.add_argument_group( "Output files arguments" )
