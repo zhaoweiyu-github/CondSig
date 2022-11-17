@@ -54,9 +54,15 @@ condsig_detector FilterSig --help
 
 ### LearnSig module
 
-LearnSig module identifies co-occupancy signatures to represent genome-wide specific collaborations of CAPs by integrating multiple ChIP-seq data in the same cell type. User can checkout documentations and tutorials in [LearnSig](docs/LearnSig).
+LearnSig module identifies co-occupancy signatures to represent genome-wide specific collaborations of CAPs by integrating multiple ChIP-seq data in the same cell type. 
 
-FilterSig module screens out condensate-like co-occupancy signatures (CondSigs) from co-occupancy signature by integrating multi-modal condensation-related features. User can checkout documentations and tutorials in [FilterSig](docs/FilterSig).
+User can checkout documentations and tutorials in [LearnSig](docs/LearnSig).
+
+### FilterSig module
+
+FilterSig module screens out condensate-like co-occupancy signatures (CondSigs) from co-occupancy signature by integrating multi-modal condensation-related features. 
+
+User can checkout documentations and tutorials in [FilterSig](docs/FilterSig).
 
 ## Citation
 
