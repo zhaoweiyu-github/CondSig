@@ -41,7 +41,7 @@ Use the following commands to install Minicoda3：
 $ wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 $ bash Miniconda3-latest-Linux-x86_64.sh
 ```
-And then users can create an isolated environment for CondSigDetector and install through the following commands:
+And then users can create an isolated environment for CondSigDetector with environment file ([environment.yml](https://github.com/zhaoweiyu-github/CondSig/blob/main/environment.yml)) and install through the following commands:
 ``` bash
 # Create environment for CondSigDetector
 $ conda env create -f environment.yml
