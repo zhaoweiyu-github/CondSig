@@ -48,7 +48,7 @@ $ conda env create -f environment.yml
 # Activate the environment
 $ conda activate condsig_env
 # Install CondSigDetector
-$ conda install -c https://anaconda.org/yuzhaowei/condsig_detector/1.2.3/download/linux-64/condsig_detector-1.2.3-py37_0.tar.bz2
+$ conda install https://anaconda.org/yuzhaowei/condsig_detector/1.2.3/download/linux-64/condsig_detector-1.2.3-py37_0.tar.bz2
 ```
 
 ### Test CondSigDetector
