@@ -1,9 +1,9 @@
-# CondSig
+# CondSigDetector
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Version: 1.2.3](https://img.shields.io/badge/Version-1.2.3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**CondSig** (**Cond**ensate-like chromatin-associated proteins co-occupancy **Sig**nature) is a comprehensive computational framework to predict component CAPs (chromatin-associated proteins) and genomic loci of potential chromatin-associated biomolecular condensates. The computation framework first detect genome-wide CAP collaborations in specific loci by integrating ChIP-seq datasets and then screen out some may be involved in biomolecular condensation based on known condensation characteristics.
+**CondSig** (**Cond**ensate-like chromatin-associated proteins co-occupancy **Sig**nature) Detector is a comprehensive computational framework designed to concurrently predict the component CAPs (chromatin-associated proteins) and genomic loci of potential chromatin-associated biomolecular condensates. The computational framework first detects genome-wide CAP collaborations in specific loci by integrating ChIP-seq datasets, and then filters out those potentially involved in biomolecular condensation based on known condensation-related characteristics.
 
 <p align="center">
 <img src="./image/Schematic.png"/>
@@ -11,41 +11,67 @@
 
 
 ## Change Log
+### v1.2.3
+* Add the summary section in FilterSig Module
 
-### v1.0.0
-* Release CondSig.
+### v1.2.2
+* Define a new overlap threshold for redudant CondSigs.
+
+### v1.2.1
+* Fix bugs about the definition of topic-positive sites and negative-control sites.
+* Modify the definition of valid topics.
+
+### v1.2.0
+* Add FilterSig module.
+
+### v1.1.0
+* Release CondSigDetector.
 
 ## System requirements
 * Linux/Unix
 
-## Install CondSig
+## Install CondSigDetector
 
-### Installing the CondSig workflow through conda
+### Installing the CondSigDetector workflow through conda
 
-CondSig uses the [Anaconda3](http://conda.pydata.org/miniconda.html) package management system to harmonize all of the software packages. Users can install the full solution of CondSig using the conda environment.
+CondSigDetector uses the [Anaconda3](http://conda.pydata.org/miniconda.html) package management system to harmonize all of the software packages. Users can install the full solution of CondSigDetector using the conda environment.
 
 Use the following commands to install Minicoda3：
 ``` bash
 $ wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 $ bash Miniconda3-latest-Linux-x86_64.sh
 ```
-And then users can create an isolated environment for CondSig and install through the following commands:
+And then users can create an isolated environment for CondSigDetector and install through the following commands:
 ``` bash
-# Create environment for CondSig
-$ conda create -n CondSig_env python=3.7
+# Create environment for CondSigDetector
+$ conda env create -f environment.yml
 # Activate the environment
-$ conda activate CondSig_env
-# Install CondSig
-$ conda install -c yuzhaowei condsig_alpha
+$ conda activate condsig_env
+# Install CondSigDetector
+$ conda install -c https://anaconda.org/yuzhaowei/condsig_detector/1.2.3/download/linux-64/condsig_detector-1.2.3-py37_0.tar.bz2
 ```
 
-### Test CondSig
+### Test CondSigDetector
 
 ```bash
-# Test CondSig command
-condsig LearnSig --help
-condsig FilterSig --help
+# Test CondSigDetector command
+condsig_detector LearnSig --help
+condsig_detector FilterSig --help
 ```
+
+## Usage
+
+### LearnSig module
+
+LearnSig module identifies co-occupancy signatures to represent genome-wide specific collaborations of CAPs by integrating multiple ChIP-seq data in the same cell type. 
+
+User can checkout documentations and tutorials in [LearnSig](docs/LearnSig).
+
+### FilterSig module
+
+FilterSig module filters out condensate-like co-occupancy signatures (CondSigs) from all co-occupancy signatures by integrating multi-modal condensation-related features. 
+
+User can checkout documentations and tutorials in [FilterSig](docs/FilterSig).
 
 ## Citation
 
