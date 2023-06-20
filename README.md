@@ -1,7 +1,7 @@
 # CondSigDetector
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-[![Version: 1.2.2](https://img.shields.io/badge/Version-1.2.2-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![Version: 1.2.3](https://img.shields.io/badge/Version-1.2.3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 **CondSig** (**Cond**ensate-like chromatin-associated proteins co-occupancy **Sig**nature) Detector is a comprehensive computational framework designed to concurrently predict the component CAPs (chromatin-associated proteins) and genomic loci of potential chromatin-associated biomolecular condensates. The computational framework first detects genome-wide CAP collaborations in specific loci by integrating ChIP-seq datasets, and then filters out those potentially involved in biomolecular condensation based on known condensation-related characteristics.
 
@@ -11,6 +11,8 @@
 
 
 ## Change Log
+### v1.2.3
+* Add the summary section in FilterSig Module
 
 ### v1.2.2
 * Define a new overlap threshold for redudant CondSigs.
@@ -42,11 +44,11 @@ $ bash Miniconda3-latest-Linux-x86_64.sh
 And then users can create an isolated environment for CondSigDetector and install through the following commands:
 ``` bash
 # Create environment for CondSigDetector
-$ conda create -n CondSig_env_v1.2.2 python=3.7
+$ conda env create -f environment.yml
 # Activate the environment
-$ conda activate CondSig_env_v1.2.2
+$ conda activate condsig_env
 # Install CondSigDetector
-$ conda install -c yuzhaowei -c conda-forge -c bioconda condsig_detector
+$ conda install -c https://anaconda.org/yuzhaowei/condsig_detector/1.2.3/download/linux-64/condsig_detector-1.2.3-py37_0.tar.bz2
 ```
 
 ### Test CondSigDetector

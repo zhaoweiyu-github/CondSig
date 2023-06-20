@@ -46,10 +46,11 @@ class SigFilter():
 	def __init__(self, args):
 		self.args = args
 		self.individual_auc_threshold = 0.6
-		self.mean_auc_threshold = 0.7
+		self.mean_auc_threshold = 0.65
 		self.mean_shap_threshold = 1
 		self.JI_TR_threshold = 1.0 / 3
 		self.JI_TR_top6_threshold = 1.0 / 3
+		self.JI_TR_top5_threshold = 1.0 / 4 # v.1.2.2
 
 	def filter(self, df_filtered_topics, region):
 
@@ -57,17 +58,17 @@ class SigFilter():
 		# filter condensate-like features
 		for index, row in df_filtered_topics.iterrows():
 			SigName = row["topic_name"]
-			focus_TR = "_".join(SigName.split("_")[:-1])
+			focus_CAP = "_".join(SigName.split("_")[:-1])
 			sig_idx = SigName.split("_")[-1]
 			
 			ROC_file = "ROC/{0}_{1}_{2}_AUROC.txt" . format(
-				focus_TR,
+				focus_CAP,
 				region,
 				sig_idx
 			)
 
 			# XGB_file = "XGBoost/{0}_{1}_{2}_shap.txt" . format(
-			# 	focus_TR,
+			# 	focus_CAP,
 			# 	region,
 			# 	sig_idx
 			# )
@@ -115,6 +116,9 @@ class SigFilter():
 			
 			# calculate JI between top 6 sig-i-pos TRs and sig-j-pos TRs
 			JI_TR_top6 = len(np.intersect1d(TR_sig_i[:6], TR_sig_j[:6])) / len(np.union1d(TR_sig_i[:6], TR_sig_j[:6]))
+
+			# calculate JI between top 5 sig-i-pos TRs and sig-j-pos TRs
+			JI_TR_top5 = len(np.intersect1d(TR_sig_i[:5], TR_sig_j[:5])) / len(np.union1d(TR_sig_i[:5], TR_sig_j[:5])) # v.1.2.2
 			
 			# calculate JI between sig-i-pos and sig-j-pos sites
 			focus_TR_i = "_".join(sig_i.split("_")[:-1])
@@ -122,16 +126,17 @@ class SigFilter():
 			focus_TR_j = "_".join(sig_j.split("_")[:-1])
 			sig_idx_j = sig_j.split("_")[-1]
 			
-			list_JI_sigs.append([sig_i, sig_j, JI_TR, JI_TR_top6])
+			list_JI_sigs.append([sig_i, sig_j, JI_TR, JI_TR_top6, JI_TR_top5])
 
 		df_JI_sigs = pd.DataFrame(list_JI_sigs)
-		df_JI_sigs.columns = ["primary", "secondary", "JI_TR", "JI_TR_top6"]
+		df_JI_sigs.columns = ["primary", "secondary", "JI_TR", "JI_TR_top6", "JI_TR_top5"]
 
 		df_JI_sigs_grouped = df_JI_sigs.groupby("primary")
 		redundant_sigs = []
 		for group, df_grpup in df_JI_sigs_grouped:
 			if group not in redundant_sigs:
-				redundant_sigs += list(df_grpup.loc[df_grpup["JI_TR_top6"] > self.JI_TR_top6_threshold, "secondary"].values)
+				# redundant_sigs += list(df_grpup.loc[df_grpup["JI_TR_top6"] > self.JI_TR_top6_threshold, "secondary"].values)
+				redundant_sigs += list(df_grpup.loc[df_grpup["JI_TR_top5"] > self.JI_TR_top5_threshold, "secondary"].values) # v1.2.2
 		df_unique_CLsig = df_filtered_topics_CLsigs.loc[np.setdiff1d(df_filtered_topics_CLsigs.index.values, redundant_sigs), :]
 		# df_unique_CLsig_featues = df_CLsig_features.loc[df_unique_CLsig.index.values, ["qualified_CL_features", "qualified_CL_features_count", "mean_AUROC", "mean_feature_importance"]]
 		df_unique_CLsig_featues = df_CLsig_features.loc[df_unique_CLsig.index.values, ["qualified_CL_features", "qualified_CL_features_count", "mean_AUROC"]]
@@ -143,7 +148,6 @@ class SigFilter():
 		
 		df_unique_CLsig_anno.to_csv("CondSig/{0}_{1}_unique_condensate_like_signatures.txt" . format(self.args.name, region), header = True, index = False, sep = "\t")
 
-
 class SigEval():
 	"""Evaluation of condensate-like capacity for each signature was performed by checking 
 	whether signature-positive sites showed higher condensate-like features than signature-negative sites"""
@@ -151,65 +155,52 @@ class SigEval():
 	def __init__(self, args):
 
 		self.args = args
+		self.sampling_times = 100
 
 	def run(self, SigName, region):
 
-		focus_TR = "_".join(SigName.split("_")[:-1])
+		focus_CAP = "_".join(SigName.split("_")[:-1])
 		sig_idx = SigName.split("_")[-1]
 
 		df_sig_pos_FE = pd.read_csv("Features/{0}_{1}_{2}_pos_FE.txt" . format(
-				focus_TR,
+				focus_CAP,
 				region,
 				sig_idx), header = 0, sep = "\t")
 
 		df_sig_neg_FE = pd.read_csv("Features/{0}_{1}_{2}_neg_FE.txt" . format(
-				focus_TR,
+				focus_CAP,
 				region,
 				sig_idx), header = 0, sep = "\t")
 
-
-		# balance the number of signature-positive and -negative sites
-		# if round(df_sig_neg_FE.shape[0] / df_sig_pos_FE.shape[0]) > 1:
-		# 	df_sig_pos_FE = pd.concat([df_sig_pos_FE] * round(df_sig_neg_FE.shape[0] / df_sig_pos_FE.shape[0]), ignore_index = True)
-		# elif round(df_sig_pos_FE.shape[0] / df_sig_neg_FE.shape[0]) > 1:
-		# 	df_sig_neg_FE = pd.concat([df_sig_neg_FE] * round(df_sig_pos_FE.shape[0] / df_sig_neg_FE.shape[0]), ignore_index = True)
+		df_sig_pos_FE = df_sig_pos_FE.loc[:, np.setdiff1d(df_sig_pos_FE.columns, ["chrom", "start", "end"])]
+		df_sig_neg_FE = df_sig_neg_FE.loc[:, np.setdiff1d(df_sig_neg_FE.columns, ["chrom", "start", "end"])]
 
 		df_sig_pos_FE.loc[:, "label"] = True
 		df_sig_neg_FE.loc[:, "label"] = False
 
-		df_sig_merged_FE_raw = pd.concat([df_sig_pos_FE, df_sig_neg_FE], axis = 0)
-		df_sig_merged_FE = df_sig_merged_FE_raw.loc[:, np.setdiff1d(df_sig_merged_FE_raw.columns, ["chrom", "start", "end"])]
+		func_roc_analysis_balanced = partial(roc_analysis_balanced, df_sig_pos_FE, df_sig_neg_FE)
+		pool = multiprocessing.Pool(self.args.threads)
+		df_auc_list = pool.map(func_roc_analysis_balanced, np.arange(self.sampling_times))
+		pool.close()
+		pool.join()
 
-		X = df_sig_merged_FE.loc[:, np.setdiff1d(df_sig_merged_FE.columns, ["label"])]
-		y = df_sig_merged_FE.loc[:, "label"]
+		df_auc_merged = pd.concat(df_auc_list, axis = 1)
+		df_auc_mean = pd.DataFrame([df_auc_merged.loc[:, "feature"].iloc[:, 0].values,
+											df_auc_merged.loc[:, "AUROC"].mean(axis = 1).values
+											]).T
+		df_auc_mean.columns = ["feature", "AUROC"]
+		df_auc_mean.loc[:, "AUROC"] = df_auc_mean.loc[:, "AUROC"].astype("float")
+		df_auc_mean.loc[:, "AUROC"] = df_auc_mean.loc[:, "AUROC"].round(decimals = 3)
 
-		self.roc_analysis(X, y, focus_TR, region, sig_idx)
-		# self.XGB_analysis(X, y, focus_TR, region, sig_idx)
+		self.roc_output(df_auc_mean, focus_CAP, region, sig_idx)
 
-	def roc_analysis(self, X, y, focus_TR, region, sig_idx):
-		"""perform ROC analysis for features in X to label y"""
-		
-		# calculate AUROC and plot ROC curve
-		list_auc = []
-		for feature in X.columns:
-			x = X.loc[:, feature].values
-			# fpr, tpr, thresholds = metrics.roc_curve(y, x)
-			auc = round(metrics.roc_auc_score(y,x), 2)
-			# ax.plot(fpr, tpr, label = "%s (AUC = %0.2f)"% (feature, auc))
-			list_auc.append([feature, auc])
-		# ax.plot([0, 1], [0, 1], "r--")
-		# ax.set_xlim([0.0, 1.0])
-		# ax.set_ylim([0.0, 1.05])
-		# ax.set_xlabel("FPR")
-		# ax.set_ylabel("TPR")
-		# ax.set_title("ROC curve")
-		# ax.legend(prop={'size':11}, bbox_to_anchor = (1.2, 0.5))
 
-		df_auc = pd.DataFrame(list_auc)
-		df_auc.columns = ["feature", "AUROC"]
+	def roc_output(self, df_auc, focus_CAP, region, sig_idx):
+		"""outplot ROC analysis result"""
+
 		df_auc = df_auc.sort_values(by = "AUROC", ascending = True)
 		df_auc.to_csv("ROC/{0}_{1}_{2}_AUROC.txt" . format(
-				focus_TR,
+				focus_CAP,
 				region,
 				sig_idx
 			), header = True, sep = "\t", index = False)
@@ -226,56 +217,11 @@ class SigEval():
 
 		plt.subplots_adjust(left = 0.45, right = 0.95, bottom = 0.15)
 		plt.savefig("ROC/{0}_{1}_{2}_AUROC.pdf" . format(
-				focus_TR,
+				focus_CAP,
 				region,
 				sig_idx))
 		plt.close()
 		logging.getLogger().setLevel(logging.INFO)
-
-	def XGB_analysis(self, X, y, focus_TR, region, sig_idx):
-		"""calculate feature importance"""
-
-		xgb = XGBClassifier(max_depth = 5,
-					n_estimators = 1000,
-					learning_rate = 0.01,
-					verbosity = 1,
-					n_jobs = self.args.threads,
-					scale_pos_weight = 1,
-					min_child_weight = 1,
-					random_state = 1007,
-					subsample = 0.8,
-					colsample_bytree = 0.8,
-					importance_type = "gain")
-
-		# build xgb classification model
-		xgb.fit(X, y)
-
-		# explain the model's predictions using SHAP
-		explainer = shap.Explainer(xgb)
-		shap_values = explainer(X)
-
-		# calculate mean shap value for each feature
-		df_shap = pd.DataFrame([X.columns.values, np.abs(shap_values.values).mean(0)]).T
-		df_shap.columns = ["feature", "mean_shap"]
-		df_shap = df_shap.sort_values(by = "mean_shap", ascending = True)
-		df_shap.to_csv("XGBoost/{0}_{1}_{2}_shap.txt".format(focus_TR, region, sig_idx), header = True, sep = "\t", index = False)
-
-		mycmap = cm.get_cmap("viridis")
-		mean_shap_normalized = (df_shap.loc[:, "mean_shap"] - df_shap.loc[:, "mean_shap"].min()) / (df_shap.loc[:, "mean_shap"].max() - df_shap.loc[:, "mean_shap"].min())
-		# info(mean_shap_normalized)
-		# info(type(mean_shap_normalized))
-		my_color = mycmap(mean_shap_normalized.astype("float"))
-			
-		fig, ax1 = plt.subplots(figsize = (4.5,4), nrows = 1, ncols = 1)
-		ax1.barh(df_shap.loc[:, "feature"], df_shap.loc[:, "mean_shap"], color = my_color, height = 0.7)
-		ax1.set_xlabel("SHAP feature importance\n(XGBoost classification model)")
-		ax1.set_title("Feature importance")
-		plt.subplots_adjust(bottom = 0.2, left = 0.45, right = 0.95)
-		plt.savefig("XGBoost/{0}_{1}_{2}_FeatureImportance.pdf" . format(
-			focus_TR,
-			region,
-			sig_idx))
-		plt.close()
 
 
 class SigFE():
@@ -295,41 +241,20 @@ class SigFE():
 		self.df_dataset = pd.read_csv(self.args.data_annotation, header = None, sep = "\t").iloc[:,0:4]
 		self.df_dataset.columns = ["factor", "label", "file", "uniprot_id"]
 		self.df_dataset.index = self.df_dataset.loc[:, "label"].values
+		uni_uniprot_id, count_uniprot_id = np.unique(self.df_dataset.loc[:, "uniprot_id"].values, return_counts = True)
+		if sum(count_uniprot_id > 1) > 0:
+			error("More than 1 CAPs are assigned to the same uniprot id ({0}), please check it and don't use redudant data for each CAP." . format(uni_uniprot_id[count_uniprot_id > 1]))
+			sys.exit(1)
+
+		df_peakov_filtered = pd.read_csv("{0}/{1}_1kb_bins_peakov_filtered.bed" . format(self.args.Sig_InputPath, self.args.Sig_InputName), header = 0, sep = "\t", index_col = "name")
+		promoter_bins = pd.read_csv("{0}/{1}_1kb_bins_peakov_promoter.bed" . format(self.args.Sig_InputPath, self.args.Sig_InputName), header = None, sep = "\t").iloc[:,3].values
+		self.df_peakov_filtered_promoter = df_peakov_filtered.loc[df_peakov_filtered.index.isin(promoter_bins),:]
+		self.df_peakov_filtered_nonpromoter = df_peakov_filtered.loc[~df_peakov_filtered.index.isin(promoter_bins),:]		
 		
 
 	def FE_preprocess(self):
 
 		"""preprocessing input feature file"""
-		
-		# genearate motif presence matrix
-		# info("1-1. Generate motif presence matrix ... ")
-		
-		# motif_path = self.args.motif
-		# motif_factor_uid_file = "motif_factor_uids_edited.txt"
-		# if not os.path.isfile("{0}/{1}".format(motif_path, motif_factor_uid_file)):
-		# 	error("No annotation file in motif path: {0}/{1}" . format(motif_path, motif_factor_uid_file))
-		# 	sys.exit(0)
-		# df_motif_factor_uid = pd.read_csv("{0}/{1}".format(motif_path, motif_factor_uid_file), header = None, sep = "\t", encoding='latin-1').iloc[:, 0:4]
-		# df_motif_factor_uid.columns = ["factor", "label", "uniprot_id", "uniprot_entry"]
-		# df_motif_factor_uid.loc[:, "uniprot_id"] = df_motif_factor_uid.loc[:, "uniprot_id"].str.upper()
-		
-		# df_motif_factor_uid_dataset = df_motif_factor_uid.loc[df_motif_factor_uid["uniprot_id"].isin(self.df_dataset.loc[:, "uniprot_id"].values), :].copy() # only motifs in dataset annotation were selected 
-		# df_motif_factor_uid_dataset.loc[:, "file"] = ["{0}/filtered_results/{1}".format(motif_path, motif_label) for motif_label in df_motif_factor_uid_dataset.loc[:, "label"].values]
-
-		# motifov_bed = Utility.Motif_OverlapMatrix(df_motif_factor_uid_dataset, self.args).intervals_intersect_genomewide_bins()
-		# df_motif_dataset = pd.read_csv(motifov_bed, header = 0, sep = "\t", index_col = "name").iloc[:, 3:]
-		# df_motif_dataset[df_motif_dataset > 1] = 1
-		
-		# motifov_uid_list = []
-		# uid_list = []
-		# for uid in np.unique(df_motif_factor_uid_dataset.loc[:, "uniprot_id"].values):
-		# 	motif_labels = df_motif_factor_uid_dataset.loc[df_motif_factor_uid_dataset["uniprot_id"] == uid, "label"] # a uniprot id may be responsible for multiple labels (multiple files for the same factor)
-		# 	motifov_uid = df_motif_dataset.loc[:, motif_labels].max(axis = 1) # if any one motif file show co-binding, the factor was denoted to be motif occurrence
-		# 	motifov_uid_list.append(motifov_uid)
-		# 	uid_list.append(uid)
-		# df_motif_dataset_labeled = pd.DataFrame(motifov_uid_list).T
-		# df_motif_dataset_labeled.columns = uid_list
-		# self.df_motif_dataset_labeled = df_motif_dataset_labeled
 
 		# protein-protein interaction between proteins of dataset (to reduce the execution time of FE run)
 		df_PPI_dataset = self.df_PPI_merged.loc[
@@ -340,6 +265,13 @@ class SigFE():
 								)), :]
 		self.df_PPI_dataset = df_PPI_dataset
 
+		# LLPS capacity
+		df_LLPS_status = self.df_dataset.loc[:, ["label", "uniprot_id"]]
+		df_LLPS_status.loc[:, "status"] = 0
+		df_LLPS_status.loc[df_LLPS_status["uniprot_id"].isin(self.df_LLPS.loc[:, "UniProt ID"].dropna().values), "status"] = 1
+		df_LLPS_status.index = df_LLPS_status.loc[:, "uniprot_id"].values
+		self.df_LLPS_status = df_LLPS_status
+
 		# disordered domain content
 		disorder_content_cutoff = 0.153 # determined by IDR percentage of LLPS proteins in human
 		df_mobidb_lite = pd.read_csv(self.args.IDR, header = None, sep = "\t")
@@ -348,53 +280,79 @@ class SigFE():
 		df_mobidb_lite.loc[:, "status"] = 0
 		df_mobidb_lite.loc[df_mobidb_lite["disorder_content"] >= disorder_content_cutoff, "status"] = 1
 		df_mobidb_lite.index = df_mobidb_lite.loc[:, "uniprot_id"].values
-		self.df_mobidb_lite = df_mobidb_lite
+		self.df_IDR_status = df_mobidb_lite
 
 		# RNA binding domain content
 		df_RBD = pd.read_csv(self.args.RBD, header = 0, sep = "\t")
 		RBD_uids = df_RBD.loc[:, "uid"].dropna().values
-		self.RBD_uids = RBD_uids
+		# self.RBD_uids = RBD_uids
+		df_RBD_status = self.df_dataset.loc[:, ["label", "uniprot_id"]]
+		df_RBD_status.loc[:, "status"] = 0
+		df_RBD_status.loc[df_RBD_status["uniprot_id"].isin(RBD_uids), "status"] = 1
+		df_RBD_status.index = df_RBD_status.loc[:, "uniprot_id"].values
+		self.df_RBD_status = df_RBD_status
 
+	def FE_run(self, SigName, component_CAPs, region):
 
-	def FE_run(self, SigName, region):
-
-		focus_TR = "_".join(SigName.split("_")[:-1])
+		focus_CAP = "_".join(SigName.split("_")[:-1])
 		sig_idx = SigName.split("_")[-1]
 
-		pos_sites = pd.read_csv(
-			"{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_pos_sites.bed" . format(
-				self.args.Sig_InputPath,
-				focus_TR,
-				region,
-				sig_idx
-				),
-			header = None, sep = "\t"
-			).iloc[:,3].values
+		# pos_sites = pd.read_csv(
+		# 	"{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_pos_sites.bed" . format(
+		# 		self.args.Sig_InputPath,
+		# 		focus_CAP,
+		# 		region,
+		# 		sig_idx
+		# 		),
+		# 	header = None, sep = "\t"
+		# 	).iloc[:,3].values
 
-		neg_sites = pd.read_csv(
-			"{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_neg_sites.bed" . format(
-				self.args.Sig_InputPath,
-				focus_TR,
-				region,
-				sig_idx
-				),
-			header = None, sep = "\t"
-			).iloc[:, 3].values
+		# neg_sites = pd.read_csv(
+		# 	"{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_neg_sites.bed" . format(
+		# 		self.args.Sig_InputPath,
+		# 		focus_CAP,
+		# 		region,
+		# 		sig_idx
+		# 		),
+		# 	header = None, sep = "\t"
+		# 	).iloc[:, 3].values
 
 		potential_combinatorial_TRs = pd.read_csv(
 			"{0}/LearnSig/{1}/{1}_{2}_voca.txt" . format(
 				self.args.Sig_InputPath,
-				focus_TR,
+				focus_CAP,
 				region
 				),
 			header = None, sep = "\t"
 			).iloc[:, 1].values
 
+		if region == "promoter":
+			df_peakov_sites_region = self.df_peakov_filtered_promoter.loc[:, potential_combinatorial_TRs]
+		else:
+			df_peakov_sites_region = self.df_peakov_filtered_nonpromoter.loc[:, potential_combinatorial_TRs]
+
+		pos_sites = df_peakov_sites_region.loc[
+			df_peakov_sites_region.loc[:, component_CAPs].sum(axis = 1) >= (0.8 * len(component_CAPs)), :].index.values
+		
+		neg_sites = df_peakov_sites_region.loc[
+		(df_peakov_sites_region.sum(axis = 1) >= (0.8 * len(component_CAPs))) & (df_peakov_sites_region.loc[:, component_CAPs].sum(axis = 1) < 2), :].index.values
+
 		df_peaks_sig_pos = self.df_peakov.loc[pos_sites, ["chrom", "start",	"end"]].copy()
 		df_peaks_sig_neg = self.df_peakov.loc[neg_sites, ["chrom", "start",	"end"]].copy()
 
+		df_peaks_sig_pos.to_csv("Sites/{0}_{1}_{2}_pos_sites.bed" . format(
+				focus_CAP,
+				region,
+				sig_idx), header = False, sep = "\t", index = False)
+
 		df_peakov_sig_pos = self.df_peakov.loc[pos_sites, potential_combinatorial_TRs].copy()
 		df_peakov_sig_neg = self.df_peakov.loc[neg_sites, potential_combinatorial_TRs].copy()
+		info(df_peakov_sig_pos.shape)
+		info(df_peakov_sig_neg.shape)
+		info(np.mean(df_peakov_sig_pos.sum(axis = 1)))
+		info(np.mean(df_peakov_sig_neg.sum(axis = 1)))
+
+		# return(None)
 
 		# convert factor label to uniprot ids
 		df_peakov_sig_pos_uids = df_peakov_sig_pos.copy()
@@ -402,66 +360,11 @@ class SigFE():
 		df_peakov_sig_pos_uids.columns = self.df_dataset.loc[potential_combinatorial_TRs, "uniprot_id"].values
 		df_peakov_sig_neg_uids.columns = self.df_dataset.loc[potential_combinatorial_TRs, "uniprot_id"].values
 
-		
-		# chromatin accessiblity
-		# CA_pos = self.CA_FE(df_peaks_sig_pos, self.args.accessibility, self.args.threads)
-		# CA_neg = self.CA_FE(df_peaks_sig_neg, self.args.accessibility, self.args.threads)
-
-		# distance to TSS
-		# cmd_pos = "bedtools closest -d -t first -a {0} -b {1} | cut -f 10" . format("{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_pos_sites.bed" . format(self.args.Sig_InputPath,
-		# 		focus_TR,
-		# 		region,
-		# 		sig_idx), self.tss_file)
-		# cmd_neg = "bedtools closest -d -t first -a {0} -b {1} | cut -f 10" . format("{0}/LearnSig/{1}/{2}/{1}_{2}_{3}_neg_sites.bed" . format(self.args.Sig_InputPath,
-		# 		focus_TR,
-		# 		region,
-		# 		sig_idx), self.tss_file)
-
-		
-		# p_pos = subprocess.Popen(
-		#   cmd_pos, 
-		#   stdout = subprocess.PIPE,
-		#   stderr = subprocess.PIPE,
-		# 	shell = "True")
-		# (stdoutdata_pos, stderrdata_pos) = p_pos.communicate()
-		# exit_code = p_pos.returncode
-		# distance_pos = list(map(int, stdoutdata_pos.decode().split("\n")[:-1]))
-		# add_sudocount = lambda x:x+1
-		# distance_pos = list(map(add_sudocount, distance_pos))
-		# distance_pos_log10 = -np.log10(distance_pos)
-
-		# p_neg = subprocess.Popen(
-		#   cmd_neg, 
-		#   stdout = subprocess.PIPE,
-		#   stderr = subprocess.PIPE,
-		# 	shell = "True")
-		# (stdoutdata_neg, stderrdata_neg) = p_neg.communicate()
-		# exit_code = p_neg.returncode
-		# distance_neg = list(map(int, stdoutdata_neg.decode().split("\n")[:-1]))
-		# distance_neg = list(map(add_sudocount, distance_neg))
-		# distance_neg_log10 = -np.log10(distance_neg)
-
 		df_peakov_sig_pos_uids_splits = np.array_split(df_peakov_sig_pos_uids, self.args.threads)
 		df_peakov_sig_neg_uids_splits = np.array_split(df_peakov_sig_neg_uids, self.args.threads)
 
-		# motif presence
-		# focused_motif_uid = np.intersect1d(df_peakov_sig_pos_uids.columns.values, self.df_motif_dataset_labeled.columns.values)
-		# df_motif_sig_pos = self.df_motif_dataset_labeled.loc[pos_sites, focused_motif_uid].copy()
-		# df_motif_sig_neg = self.df_motif_dataset_labeled.loc[neg_sites, focused_motif_uid].copy()
-		
-		# pool = multiprocessing.Pool(self.args.threads)
-		# func_motif_pos = partial(motif_frequency_cal, df_motif_sig_pos)
-		# motif_frequency_pos = np.concatenate(pool.map(func_motif_pos, df_peakov_sig_pos_uids_splits))
-		# pool.close()
-		# pool.join()
-
-		# pool = multiprocessing.Pool(self.args.threads)
-		# func_motif_neg = partial(motif_frequency_cal, df_motif_sig_neg)
-		# motif_frequency_neg = np.concatenate(pool.map(func_motif_neg, df_peakov_sig_neg_uids_splits))
-		# pool.close()
-		# pool.join()
-
 		# protein-protein interaction frequency
+		info("protein-protein interaction")
 		func_PPI = partial(PPI_frequency_cal, self.df_PPI_dataset)
 		pool = multiprocessing.Pool(self.args.threads)
 		PPI_frequency_pos = np.concatenate(pool.map(func_PPI, df_peakov_sig_pos_uids_splits))
@@ -474,7 +377,8 @@ class SigFE():
 		pool.join()
 
 		# LLPS frequency
-		func_LLPS = partial(LLPS_frequency_cal, self.df_LLPS)
+		info("LLPS")
+		func_LLPS = partial(LLPS_frequency_cal, self.df_LLPS_status)
 		pool = multiprocessing.Pool(self.args.threads)
 		LLPS_frequency_pos = np.concatenate(pool.map(func_LLPS, df_peakov_sig_pos_uids_splits))
 		pool.close()
@@ -486,6 +390,7 @@ class SigFE():
 		pool.join()
 
 		# MLO frequency
+		info("MLO")
 		func_MLO = partial(MLO_frequency_cal, self.df_MLO)
 		pool = multiprocessing.Pool(self.args.threads)
 		MLO_frequency_pos = np.concatenate(pool.map(func_MLO, df_peakov_sig_pos_uids_splits))
@@ -498,7 +403,8 @@ class SigFE():
 		pool.join()
 
 		# disorder frequency
-		func_disorder = partial(disorder_frequency_cal, self.df_mobidb_lite)
+		info("disorder frequency")
+		func_disorder = partial(disorder_frequency_cal, self.df_IDR_status)
 		pool = multiprocessing.Pool(self.args.threads)
 		disorder_pos = np.concatenate(pool.map(func_disorder, df_peakov_sig_pos_uids_splits))
 		pool.close()
@@ -510,7 +416,8 @@ class SigFE():
 		pool.join()
 
 		# RNA-binding domain frequency
-		func_RBD = partial(RBD_frequency_cal, self.RBD_uids)
+		info("RNA-binding domain")
+		func_RBD = partial(RBD_frequency_cal, self.df_RBD_status)
 		pool = multiprocessing.Pool(self.args.threads)
 		RBD_pos = np.concatenate(pool.map(func_RBD, df_peakov_sig_pos_uids_splits))
 		pool.close()
@@ -559,12 +466,12 @@ class SigFE():
 			df_sig_neg_FE.columns = ["chrom", "start", "end", "PPI", "RNA binding strength", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
 
 			df_sig_pos_FE.to_csv("Features/{0}_{1}_{2}_pos_FE.txt" . format(
-				focus_TR,
+				focus_CAP,
 				region,
 				sig_idx), header = True, sep = "\t", index = False)
 
 			df_sig_neg_FE.to_csv("Features/{0}_{1}_{2}_neg_FE.txt" . format(
-				focus_TR,
+				focus_CAP,
 				region,
 				sig_idx), header = True, sep = "\t", index = False)
 
@@ -599,12 +506,12 @@ class SigFE():
 			df_sig_neg_FE.columns = ["chrom", "start", "end", "PPI", "LLPS capacity", "MLO", "Disordered domain", "RNA binding domain"]
 
 			df_sig_pos_FE.to_csv("Features/{0}_{1}_{2}_pos_FE.txt" . format(
-				focus_TR,
+				focus_CAP,
 				region,
 				sig_idx), header = True, sep = "\t", index = False)
 
 			df_sig_neg_FE.to_csv("Features/{0}_{1}_{2}_neg_FE.txt" . format(
-				focus_TR,
+				focus_CAP,
 				region,
 				sig_idx), header = True, sep = "\t", index = False)
 
@@ -627,22 +534,29 @@ class SigFE():
 		
 		return(df_sites_rna)
 
-def motif_frequency_cal(df_motif_selected, df_peakov_selected):
-	"""caluclate the ratio of occupancy events with motif presence"""
+def roc_analysis_balanced(df_sig_pos_FE, df_sig_neg_FE, sampling_count):
+	"""perform ROC analysis for features at balanced positive sites and negative sites"""
+	
+	if df_sig_pos_FE.shape[0] >= df_sig_neg_FE.shape[0]:
+		df_sig_merged_FE = pd.concat([df_sig_pos_FE.sample(n = df_sig_neg_FE.shape[0], replace = False), df_sig_neg_FE], axis = 0)
+	else:
+		df_sig_merged_FE = pd.concat([df_sig_pos_FE, df_sig_neg_FE.sample(n = df_sig_pos_FE.shape[0], replace = False)], axis = 0)
 
-	motif_frequencies = []
-	for index, row_peakov in df_peakov_selected.iterrows():
-		peakov_factor = row_peakov[row_peakov > 0].index.values # factor with occupancy events
-		if index in df_motif_selected.index.values:
-			row_motif = df_motif_selected.loc[index, :]
-			motif_factor = row_motif[row_motif > 0].index.values # factor with motif presence
-			motif_peakov_number = len(np.intersect1d(motif_factor, peakov_factor)) # factor with both occupancy events and motif presence
-			motif_frequency = motif_peakov_number / len(peakov_factor)
-		else:
-			motif_frequency = 0
-		motif_frequencies.append(motif_frequency)
+	X = df_sig_merged_FE.loc[:, np.setdiff1d(df_sig_merged_FE.columns, ["label"])]
+	y = df_sig_merged_FE.loc[:, "label"]
 
-	return(motif_frequencies)
+	# calculate AUROC and plot ROC curve
+	list_auc = []
+	for feature in X.columns:
+		x = X.loc[:, feature].values
+		# fpr, tpr, thresholds = metrics.roc_curve(y, x)
+		auc = round(metrics.roc_auc_score(y,x), 2)
+		list_auc.append([feature, auc])
+	df_auc = pd.DataFrame(list_auc)
+	df_auc.columns = ["feature", "AUROC"]
+
+	return(df_auc)
+
 
 def PPI_frequency_cal(df_PPI_dataset, df_peakov_selected):
 	"""calculate protein-protein interaction frequency"""
@@ -663,16 +577,11 @@ def PPI_frequency_cal(df_PPI_dataset, df_peakov_selected):
 
 	return(PPI_frequencies)
 
-def LLPS_frequency_cal(df_LLPS, df_peakov_selected):
+def LLPS_frequency_cal(df_LLPS_status, df_peakov_selected):
 	"""calculate LLPS frequency of occupied factors"""
-		
-	LLPS_frequencies = []
-	LLPS_protein_uids = df_LLPS.loc[:, "UniProt ID"].dropna().values
-	for index, row in df_peakov_selected.iterrows():
-		peakov_uids = row[row > 0].index.values
-		peakov_uids_LLPS = np.intersect1d(peakov_uids, LLPS_protein_uids)
-		LLPS_frequency = len(peakov_uids_LLPS) / len(peakov_uids)
-		LLPS_frequencies.append(LLPS_frequency)
+	
+	df_LLPS_frequencies = df_peakov_selected * df_LLPS_status.loc[df_peakov_selected.columns.values, "status"] # 0/1 matrix * 0/1 status array
+	LLPS_frequencies = np.array(df_LLPS_frequencies.sum(axis = 1) / df_peakov_selected.sum(axis = 1))
 		
 	return(LLPS_frequencies)
 
@@ -693,21 +602,17 @@ def MLO_frequency_cal(df_MLO, df_peakov_selected):
 
 	return(MLO_protein_frequencies)
 
-def disorder_frequency_cal(df_mobidb_lite, df_peakov_selected):
+def disorder_frequency_cal(df_IDR_status, df_peakov_selected):
 		
-	disorder_frequencies = []
-	for index, row in df_peakov_selected.iterrows():
-		peakov_uids = row[row > 0].index.values
-		disorder_frequency = np.sum(df_mobidb_lite.loc[peakov_uids, "status"]) / len(peakov_uids)
-		disorder_frequencies.append(disorder_frequency)
+	df_disorder_frequencies = df_peakov_selected * df_IDR_status.loc[df_peakov_selected.columns.values, "status"]
+	disorder_frequencies = np.array(df_disorder_frequencies.sum(axis = 1) / df_peakov_selected.sum(axis = 1))
+
 	return(disorder_frequencies)
 
-def RBD_frequency_cal(RBD_uids, df_peakov_selected):
+def RBD_frequency_cal(df_RBD_status, df_peakov_selected):
 		
-	RBD_frequencies = []
-	for index, row in df_peakov_selected.iterrows():
-		peakov_uids = row[row > 0].index.values
-		RBD_frequency = len(np.intersect1d(peakov_uids, RBD_uids)) / len(peakov_uids)
-		RBD_frequencies.append(RBD_frequency)
+	df_RBD_frequencies = df_peakov_selected * df_RBD_status.loc[df_peakov_selected.columns.values, "status"]
+	RBD_frequencies = np.array(df_RBD_frequencies.sum(axis = 1) / df_peakov_selected.sum(axis = 1))
+
 	return(RBD_frequencies)
 

@@ -2,11 +2,11 @@
 # Time-stamp: <2022-11-08 Zhaowei Yu>
 
 """
-Description: CondSig detector v1.2.0
+Description: CondSig detector v1.2.2
 Copyright (c) 2022 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
 
 @status: first release 
-@version: v1.2.0
+@version: v1.2.2
 @author:  Zhaowei Yu
 @contact: zhaoweiyu@tongji.edu.cn
 """
@@ -54,14 +54,14 @@ def main():
 			os.mkdir("LearnSig")
 		os.chdir("LearnSig")
 
-		filtered_promoter_topics_list = []
-		filtered_nonpromoter_topics_list = []
+		valid_promoter_topics_list = []
+		valid_nonpromoter_topics_list = []
 		if args.mode == "focus":
 			if args.focus in df_peakov_filtered.columns:
 				siglearn = LearnSig.SignatureLearning(df_peakov_raw, df_peakov_filtered, args, output_prefix)
-				df_filtered_promoter_topics_focus, df_filtered_nonpromoter_topics_focus = siglearn.learn_focus(args.focus, count = 1, total_jobs = 1)
-				filtered_promoter_topics_list.append(df_filtered_promoter_topics_focus)
-				filtered_nonpromoter_topics_list.append(df_filtered_nonpromoter_topics_focus)
+				df_valid_promoter_topics_focus, df_valid_nonpromoter_topics_focus = siglearn.learn_focus(args.focus, count = 1, total_jobs = 1)
+				valid_promoter_topics_list.append(df_valid_promoter_topics_focus)
+				valid_nonpromoter_topics_list.append(df_valid_nonpromoter_topics_focus)
 			else:
 				error("2. Focus CAP {0} is not in data annotation file or has too few peaks." . format(args.focus))
 				sys.exit(0)
@@ -71,24 +71,24 @@ def main():
 			for focus_CAP in dataprocess.df_dataset.loc[:, "label"].values:
 				if focus_CAP in df_peakov_filtered.columns:
 					siglearn = LearnSig.SignatureLearning(df_peakov_raw, df_peakov_filtered, args, output_prefix)
-					df_filtered_promoter_topics_focus, df_filtered_nonpromoter_topics_focus = siglearn.learn_focus(focus_CAP, count, total_jobs = dataprocess.df_dataset.shape[0])
-					filtered_promoter_topics_list.append(df_filtered_promoter_topics_focus)
-					filtered_nonpromoter_topics_list.append(df_filtered_nonpromoter_topics_focus)
+					df_valid_promoter_topics_focus, df_valid_nonpromoter_topics_focus = siglearn.learn_focus(focus_CAP, count, total_jobs = dataprocess.df_dataset.shape[0])
+					valid_promoter_topics_list.append(df_valid_promoter_topics_focus)
+					valid_nonpromoter_topics_list.append(df_valid_nonpromoter_topics_focus)
 				else:
 					error("2. Focus CAP {0} is not in data annotation file or has too few peaks." . format(focus_CAP))
 				count += 1
 
-		df_filtered_promoter_topics_all = pd.concat(filtered_promoter_topics_list, axis = 0)
-		df_filtered_nonpromoter_topics_all = pd.concat(filtered_nonpromoter_topics_list, axis = 0)
-		df_filtered_promoter_topics_all.to_csv("{0}_filtered_promoter_topics_all.txt" . format(args.name), header = True, sep = "\t", index = False)
-		df_filtered_nonpromoter_topics_all.to_csv("{0}_filtered_nonpromoter_topics_all.txt" . format(args.name), header = True, sep = "\t", index = False)
+		df_valid_promoter_topics_all = pd.concat(valid_promoter_topics_list, axis = 0)
+		df_valid_nonpromoter_topics_all = pd.concat(valid_nonpromoter_topics_list, axis = 0)
+		df_valid_promoter_topics_all.to_csv("{0}_valid_promoter_topics_all.txt" . format(args.name), header = True, sep = "\t", index = False)
+		df_valid_nonpromoter_topics_all.to_csv("{0}_valid_nonpromoter_topics_all.txt" . format(args.name), header = True, sep = "\t", index = False)
 
 	### FilterSig
 	if subcommand == "FilterSig":
 		args = check_FilterSig_arguments(args)
 
-		df_filtered_promoter_topics_all = pd.read_csv("{0}/LearnSig/{1}_filtered_promoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName), header = 0, sep = "\t")
-		df_filtered_nonpromoter_topics_all = pd.read_csv("{0}/LearnSig/{1}_filtered_nonpromoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName), header = 0, sep = "\t")
+		df_valid_promoter_topics_all = pd.read_csv("{0}/LearnSig/{1}_valid_promoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName), header = 0, sep = "\t")
+		df_valid_nonpromoter_topics_all = pd.read_csv("{0}/LearnSig/{1}_valid_nonpromoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName), header = 0, sep = "\t")
 
 		os.chdir(args.out_dir)
 
@@ -103,33 +103,36 @@ def main():
 		if not os.path.isdir("Features"):
 			os.mkdir("Features")
 
+		if not os.path.isdir("Sites"):
+			os.mkdir("Sites")
+
 		info("2. Feature enginerring ... ")
 		count = 1
-		for index, row in df_filtered_promoter_topics_all.iterrows():
+		for index, row in df_valid_promoter_topics_all.iterrows():
 			SigName = row["topic_name"]
+			component_CAPs = row["component_word"].split(",")
 			info("2-1-{0}. Feature enginerring for promoter signature : {1}" . format(count, SigName))
-			sigFE.FE_run(SigName, "promoter")
+			sigFE.FE_run(SigName, component_CAPs, "promoter")
 			count += 1
-		for index, row in df_filtered_nonpromoter_topics_all.iterrows():
+		for index, row in df_valid_nonpromoter_topics_all.iterrows():
 			SigName = row["topic_name"]
+			component_CAPs = row["component_word"].split(",")
 			info("2-1-{0}. Feature enginerring for non-promoter signature : {1}" . format(count, SigName))
-			sigFE.FE_run(SigName, "nonpromoter")
+			sigFE.FE_run(SigName, component_CAPs, "nonpromoter")
 			count += 1
 
 		info("3. Evaluation of condensation probability for signatures ... ")
 		if not os.path.isdir("ROC"):
 			os.mkdir("ROC")
-		# if not os.path.isdir("XGBoost"):
-		# 	os.mkdir("XGBoost")
 
 		sigEval = FilterSig.SigEval(args)
 		count = 1
-		for index, row in df_filtered_promoter_topics_all.iterrows():
+		for index, row in df_valid_promoter_topics_all.iterrows():
 			SigName = row["topic_name"]
 			info("3-1-{0}. Feature evaluation for promoter signature : {1}" . format(count, SigName))
 			sigEval.run(SigName, "promoter")
 			count += 1
-		for index, row in df_filtered_nonpromoter_topics_all.iterrows():
+		for index, row in df_valid_nonpromoter_topics_all.iterrows():
 			SigName = row["topic_name"]
 			info("3-1-{0}. Feature evaluation for non-promoter signature : {1}" . format(count, SigName))
 			sigEval.run(SigName, "nonpromoter")
@@ -140,8 +143,8 @@ def main():
 			os.mkdir("CondSig")
 
 		sigFilter = FilterSig.SigFilter(args)
-		sigFilter.filter(df_filtered_promoter_topics_all, "promoter")
-		sigFilter.filter(df_filtered_nonpromoter_topics_all, "nonpromoter")
+		sigFilter.filter(df_valid_promoter_topics_all, "promoter")
+		sigFilter.filter(df_valid_nonpromoter_topics_all, "nonpromoter")
 
 
 def prepare_argparser():
@@ -182,10 +185,6 @@ def add_FilterSig_parser(subparsers):
 	group_input.add_argument( "--RBD", dest = "RBD", type = str, required = True, help = "Annotation of RNA-binding domain content of proteins. REQUIRED." )
 	group_input.add_argument( "--RBS", dest = "RBS", type = str, default = None, help = "Big wiggle track of genome-wide RNA-binding density. Default: None." )
 
-	# group_input.add_argument( "--Accessibility", dest = "accessibility", type = str, required = True, help = "Big wiggle track of chromatin accessibility. REQUIRED." )
-	# group_input.add_argument( "--Motif", dest = "motif", type = str, required = True, help = "Motif path containing all bed files of motif-presence sites. REQUIRED." )
-	# group_input.add_argument( "--GenomeVersion", dest = "genome_version", type = str, default = "hg38", help = "The genome version of peak file. Default:hg38." )
-
 	group_input.add_argument( "--Threads", dest = "threads", type = int, default = 8, help = "The processes used of the job. Default:8." )
 
 	# group for output files
@@ -201,7 +200,8 @@ def add_LearnSig_parser(subparsers):
 	
 	# group for input files
 	group_input = argparser_LearnSig.add_argument_group( "Input files arguments" )
-	group_input.add_argument( "--DataAnnotation", dest = "data_annotation", type = str, required = True, help = "Annotation file of CAPs in the same cell type. 4 columns of annotation file are factor, label, peak file directory, uniprot id with tab delimited. Example: CTCFL K562_GSM803401_CTCFL K562_GSM803401_CTCFL.bed Q8NI51. REQUIRED." )
+	group_input.add_argument( "--DataAnnotation", dest = "data_annotation", type = str, required = True, help = "Annotation file of CAPs in the same cell type. 4 columns of annotation file are factor, label, peak file name, uniprot id with tab delimited. Example: CTCFL K562_GSM803401_CTCFL K562_GSM803401_CTCFL.bed Q8NI51. REQUIRED." )
+	group_input.add_argument( "--DataDir", dest = "data_dir", type = str, required = True, help = "Input Peak files directory. REQUIRED." )
 	
 	group_input.add_argument( "--Mode", dest = "mode", type = str, default = "all", help = "Mode of detecting CAP co-occupancy signatures. 'all' means detecting co-occupancy signatures for each CAP iteatively and 'focus' means detecting co-occupancy signatures for focus CAP. Default:all." )
 	group_input.add_argument( "--Focus", dest = "focus", type = str, help = "Focus CAP, avaiable when focus mode is set." )
@@ -212,13 +212,13 @@ def add_LearnSig_parser(subparsers):
 
 	group_input.add_argument( "--Threads", dest = "threads", type = int, default = 8, help = "The processes used of the job. Default:8." )
 
-	group_input.add_argument( "--GenomeVersion", dest = "genome_version", type = str, default = "hg38", help = "The genome version of peak file. Default:hg38." )
+	group_input.add_argument( "--GenomeVersion", dest = "genome_version", type = str, default = "hg38", required = True, help = "The UCSC genome version,only hg38 and mm10 is avaiable now. Default:hg38." )
 
 	# group for output files
 	group_output = argparser_LearnSig.add_argument_group( "Output files arguments" )
 	group_output.add_argument( "--Name", dest = "name", type = str, default = "Test", help = "Output name. Default:Test" )
 	group_output.add_argument( "--OutDir", dest = "out_dir", type = str, default = os.getcwd(), help = "Output directory (absolute path required). Default:." )
-	group_output.add_argument( "--Zscore", dest = "zscore", type = float, default = 1.0, help = "Z-score threshold for identifying component CAPs of signatures. Default:1." )
+	group_output.add_argument( "--Zscore", dest = "zscore", type = float, default = 1.3, help = "Z-score threshold for identifying component CAPs of signatures. Default:1.3." )
 
 def check_FilterSig_arguments(args):
 	"""Check arguments for FilterSig module"""
@@ -229,10 +229,10 @@ def check_FilterSig_arguments(args):
 
 	# check the setting of signature annotation file
 	args.Sig_InputPath = os.path.abspath(args.Sig_InputPath)
-	if not os.path.isfile("{0}/LearnSig/{1}_filtered_promoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName)):
+	if not os.path.isfile("{0}/LearnSig/{1}_valid_promoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName)):
 		error("No annotation for co-occupancy signatures was found in {0}/LearnSig. Please check your input path or your LearnSig module." . format(args.Sig_InputPath))
 		sys.exit(0)
-	if not os.path.isfile("{0}/LearnSig/{1}_filtered_nonpromoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName)):
+	if not os.path.isfile("{0}/LearnSig/{1}_valid_nonpromoter_topics_all.txt" . format(args.Sig_InputPath, args.Sig_InputName)):
 		error("No annotation for co-occupancy signatures was found in {0}/LearnSig. Please check your input path or your LearnSig module." . format(args.Sig_InputPath))
 		sys.exit(0)
 
@@ -248,8 +248,6 @@ def check_FilterSig_arguments(args):
 	args.PPI = os.path.abspath(args.PPI)
 	args.IDR = os.path.abspath(args.IDR)
 	args.RBD = os.path.abspath(args.RBD)
-	# args.accessibility = os.path.abspath(args.accessibility)
-
 
 	if args.RBS != None:
 		if not os.path.isfile(args.RBS):
@@ -257,20 +255,6 @@ def check_FilterSig_arguments(args):
 			sys.exit(0)
 
 		args.RBS = os.path.abspath(args.RBS)
-
-	# check the TSS file
-	# anno_dir = pkg_resources.resource_filename(CondSig.__name__, "resource")
-	# TSS_file = "{0}.tss.bed" . format(args.genome_version)
-	# if not os.path.isfile("{0}/{1}" . format(anno_dir, TSS_file)):
-	# 	error("No TSS file for the given genome version. Check your genome version {0} or annotation file directory {1}." . format(args.genome_version, anno_dir))
-	# else:
-	# 	args.genome_annotation = lambda: None # add a new attribute for genome annotation to args object 
-	# 	setattr(args.genome_annotation, "TSS_file", "{0}/{1}" . format(anno_dir, TSS_file)) # set attributes contents
-
-	# check the directory of motif
-	# if not os.path.isdir(args.motif):
-	# 	error("No such directory: {0}" . format(args.motif))
-	# args.motif = os.path.abspath(args.motif)
 
 	# check the outpath
 	if args.name == None:
@@ -290,8 +274,15 @@ def check_LearnSig_arguments(args):
 	"""Check arguments for LearnSig module"""
 
 	# check the setting of annotation file
+	args.data_annotation = os.path.abspath(args.data_annotation)
 	if not os.path.isfile(args.data_annotation):
 		error("{0} is not a file or a directory. Please check it." . format(args.data_annotation))
+		sys.exit(0)
+
+	# check the setting of peak file directory
+	args.data_dir = os.path.abspath(args.data_dir)
+	if not os.path.isdir(args.data_dir):
+		error("{0} is not a file or a directory. Please check it." . format(args.data_dir))
 		sys.exit(0)
 
 	# check the setting of mode and focus CAP

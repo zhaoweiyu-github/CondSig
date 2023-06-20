@@ -52,21 +52,15 @@ class SignatureLearning():
 		# determine focus context and control context
 		df_peakov_filtered_transformed = df_peakov_filtered_pcCAPs * stats.zscore(df_gF1s.loc[focus_CAP,potentail_combinatorial_CAPs])
 		focus_bins = df_peakov_filtered_transformed.loc[df_peakov_filtered_transformed.sum(axis = 1) > 0,:].index.values
-		control_bins = df_peakov_filtered_transformed.loc[df_peakov_filtered_transformed.sum(axis = 1) <= 0,:].index.values
+		# control_bins = df_peakov_filtered_transformed.loc[df_peakov_filtered_transformed.sum(axis = 1) <= 0,:].index.values
 
 		df_peakov_filtered_focus = self.df_peakov_filtered.loc[focus_bins, potentail_combinatorial_CAPs]
 		df_peakov_filtered_focus = df_peakov_filtered_focus.loc[df_peakov_filtered_focus.sum(axis = 1) >= 2,:]
-		df_peakov_filtered_control = self.df_peakov_filtered.loc[control_bins, potentail_combinatorial_CAPs]
-		df_peakov_filtered_control = df_peakov_filtered_control.loc[df_peakov_filtered_control.sum(axis = 1) >= 2,:]
 
 		# build biterm topic model on focus context
-		df_filtered_promoter_topics, df_filtered_nonpromoter_topics = Utility.BuildBTM(focus_CAP, count, self.df_peakov_raw, self.df_peakov_filtered, df_peakov_filtered_focus, df_peakov_filtered_control, self.args, self.output_prefix).run()
+		df_valid_promoter_topics, df_valid_nonpromoter_topics = Utility.BuildBTM(focus_CAP, count, self.df_peakov_raw, self.df_peakov_filtered, df_peakov_filtered_focus, self.args, self.output_prefix).run()
 
-		return(df_filtered_promoter_topics, df_filtered_nonpromoter_topics)
-
-
-	def learn_all():
-		pass
+		return(df_valid_promoter_topics, df_valid_nonpromoter_topics)
 
 
 class DataProcessing():
@@ -79,13 +73,14 @@ class DataProcessing():
 				):
 
 		self.args = args
-
-		# self.df_dataset = pd.read_csv(self.args.data_annotation, header = None, sep = "\t")
-		# self.df_dataset.columns = ["factor", "label", "file", "uniprot_id", "uniprot_entry"]
-		# self.df_dataset.loc[:, "uniprot_entry"] = self.df_dataset.loc[:, "uniprot_entry"].str.upper()
-
 		self.df_dataset = pd.read_csv(self.args.data_annotation, header = None, sep = "\t").iloc[:, 0:4]
 		self.df_dataset.columns = ["factor", "label", "file", "uniprot_id"]
+		generate_abspath = lambda x:os.path.join(self.args.data_dir, x) 
+		self.df_dataset.loc[:, "file"] = list(map(generate_abspath, self.df_dataset.loc[:, "file"].values))
+		uni_uniprot_id, count_uniprot_id = np.unique(self.df_dataset.loc[:, "uniprot_id"].values, return_counts = True)
+		if sum(count_uniprot_id > 1) > 0:
+			error("More than 1 CAPs are assigned to the same uniprot id ({0}), please check it and don't use redudant data for each CAP." . format(uni_uniprot_id[count_uniprot_id > 1]))
+			sys.exit(1)
 
 		self.chromsize_file = self.args.genome_annotation.chromsize_file
 
