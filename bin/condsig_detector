@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# Time-stamp: <2022-11-08 Zhaowei Yu>
+# Time-stamp: <2023-06-20 Zhaowei Yu>
 
 """
-Description: CondSig detector v1.2.2
-Copyright (c) 2022 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
+Description: CondSig detector v1.2.3
+Copyright (c) 2023 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
 
 @status: first release 
-@version: v1.2.2
+@version: v1.2.3
 @author:  Zhaowei Yu
 @contact: zhaoweiyu@tongji.edu.cn
 """
@@ -17,7 +17,7 @@ Copyright (c) 2022 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
 
 import os,sys
 import argparse as ap
-import pkg_resources
+# import pkg_resources
 import pandas as pd
 
 # ------------------------------
@@ -141,6 +141,8 @@ def main():
 		info("4. Filter condensate-like signatures ... ")
 		if not os.path.isdir("CondSig"):
 			os.mkdir("CondSig")
+		if not os.path.isdir("Summary"):
+			os.mkdir("Summary")
 
 		sigFilter = FilterSig.SigFilter(args)
 		sigFilter.filter(df_valid_promoter_topics_all, "promoter")
@@ -150,7 +152,7 @@ def main():
 def prepare_argparser():
 	"""Prepare optparser object. New options will be added in this function first."""
 
-	description = "%(prog)s -- Condensate-like chromatin-associated protein co-occupancy Signatures"
+	description = "%(prog)s -- Condensate-like chromatin-associated protein co-occupancy signatures detector"
 	epilog = "For command line options of each command, type: %(prog)s COMMAND -h"
 
 	# top-level parser
@@ -300,7 +302,8 @@ def check_LearnSig_arguments(args):
 		os.mkdir(args.out_dir)
 
 	# check the annotation files for the given genome version (only hg38 and mm10 are supported)
-	anno_dir = pkg_resources.resource_filename(CondSig.__name__, "resource")
+	# anno_dir = pkg_resources.resource_filename(CondSig.__name__, "resource")
+	anno_dir = os.path.join(list(CondSig.__path__)[0], 'resource')
 	chromsize_file = "{0}_clean.chrom.sizes" . format(args.genome_version)
 	promoter_file = "{0}.promoter.3k.bed" . format(args.genome_version)
 	blacklist_file = "{0}-blacklist.v2.bed" . format(args.genome_version)
