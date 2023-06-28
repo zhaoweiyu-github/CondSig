@@ -86,5 +86,5 @@ condsig_detector LearnSig \
 
 ## Notes
 
-​The ChIP-seq data of CAPs were collected from Cistrome Data Browser and filtrated using a stringent quality control procedures. Datasets and meta data for mESC([mESC_peaks.tar.gz](http://compbio2-zhanglab.org/CondSigDB/data/GitHub/mESC_peaks.tar.gz), [mESC_dataset_meta.txt](http://compbio2-zhanglab.org/CondSigDB/data/GitHub/mESC_dataset_meta.txt)) and K562([K562_peaks.tar.gz](http://compbio2-zhanglab.org/CondSigDB/data/GitHub/K562_peaks.tar.gz), [K562_dataset_meta.txt](http://compbio2-zhanglab.org/CondSigDB/data/GitHub/K562_dataset_meta.txt)) were released.
+​The ChIP-seq data of CAPs were collected from Cistrome Data Browser and filtrated using a stringent quality control procedures. Datasets and meta data for mESC([mESC_peaks.tar.gz](https://compbio-zhanglab.org/CondSigDB/data/GitHub/mESC_peaks.tar.gz), [mESC_dataset_meta.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/mESC_dataset_meta.txt)) and K562([K562_peaks.tar.gz](https://compbio-zhanglab.org/CondSigDB/data/GitHub/K562_peaks.tar.gz), [K562_dataset_meta.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/K562_dataset_meta.txt)) were released.
 
