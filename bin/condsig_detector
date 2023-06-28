@@ -180,19 +180,19 @@ def add_FilterSig_parser(subparsers):
 	group_input.add_argument( "--SigInputPath", dest = "Sig_InputPath", type = str, required = True, help = "Input LearnSig path. REQUIRED." )
 	group_input.add_argument( "--SigInputName", dest = "Sig_InputName", type = str, required = True, help = "Input LearnSig name. REQUIRED." )
 
-	group_input.add_argument( "--LLPS", dest = "LLPS", type = str, required = True, help = "Annotation of LLPS proteins. REQUIRED." )
-	group_input.add_argument( "--MLO", dest = "MLO", type = str, required = True, help = "Annotation of MLO component. REQUIRED." )
-	group_input.add_argument( "--PPI", dest = "PPI", type = str, required = True, help = "Annotation of protein-protein interaction. REQUIRED." )
-	group_input.add_argument( "--IDR", dest = "IDR", type = str, required = True, help = "Annotation of protein IDR properties. REQUIRED." )
-	group_input.add_argument( "--RBD", dest = "RBD", type = str, required = True, help = "Annotation of RNA-binding domain content of proteins. REQUIRED." )
-	group_input.add_argument( "--RBS", dest = "RBS", type = str, default = None, help = "Big wiggle track of genome-wide RNA-binding density. Default: None." )
+	group_input.add_argument( "--LLPS", dest = "LLPS", type = str, required = True, help = "Annotation of LLPS proteins, check demo file and format details in GitHub. REQUIRED." )
+	group_input.add_argument( "--MLO", dest = "MLO", type = str, required = True, help = "Annotation of MLO component, check demo file and format details in GitHub. REQUIRED." )
+	group_input.add_argument( "--PPI", dest = "PPI", type = str, required = True, help = "Annotation of protein-protein interaction, check demo file and format details in GitHub. REQUIRED." )
+	group_input.add_argument( "--IDR", dest = "IDR", type = str, required = True, help = "Annotation of protein IDR properties, check demo file and format details in GitHub. REQUIRED." )
+	group_input.add_argument( "--RBD", dest = "RBD", type = str, required = True, help = "Annotation of RNA-binding domain content of proteins, check demo file and format details in GitHub. REQUIRED." )
+	group_input.add_argument( "--RBS", dest = "RBS", type = str, default = None, help = "Big wiggle track of genome-wide RNA-binding density, check demo file and format details in GitHub. Default: None." )
 
 	group_input.add_argument( "--Threads", dest = "threads", type = int, default = 8, help = "The processes used of the job. Default:8." )
 
 	# group for output files
 	group_output = argparser_FilterSig.add_argument_group( "Output files arguments" )
 	group_output.add_argument( "--Name", dest = "name", type = str, default = None, help = "Output name. Default: Input LearnSig name." )
-	group_output.add_argument( "--OutDir", dest = "out_dir", type = str, default = None, help = "Output directory (absolute path required). Default: Input LearnSig path." )
+	group_output.add_argument( "--OutDir", dest = "out_dir", type = str, default = None, help = "Output directory. Default: Input LearnSig path." )
 
 
 def add_LearnSig_parser(subparsers):
