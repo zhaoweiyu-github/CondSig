@@ -12,7 +12,7 @@
 
 ## Change Log
 ### v1.2.3
-* Add the summary section in FilterSig Module
+* Add the summary section in FilterSig module.
 
 ### v1.2.2
 * Define a new overlap threshold for redudant CondSigs.
