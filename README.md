@@ -34,7 +34,7 @@
 
 ### Installing the CondSigDetector workflow through conda
 
-CondSigDetector uses the [Anaconda3](http://conda.pydata.org/miniconda.html) package management system to harmonize all of the software packages. Users can install the full solution of CondSigDetector using the conda environment.
+CondSigDetector uses the [Miniconda3](http://conda.pydata.org/miniconda.html) package management system to harmonize all of the software packages. Users can install the full solution of CondSigDetector using the conda environment.
 
 Use the following commands to install Minicoda3：
 ``` bash
