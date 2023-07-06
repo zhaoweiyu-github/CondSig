@@ -12,7 +12,7 @@
 
 ## Change Log
 ### v1.2.3
-* Add the summary section in FilterSig Module
+* Add the summary section in FilterSig module.
 
 ### v1.2.2
 * Define a new overlap threshold for redudant CondSigs.
@@ -34,7 +34,7 @@
 
 ### Installing the CondSigDetector workflow through conda
 
-CondSigDetector uses the [Anaconda3](http://conda.pydata.org/miniconda.html) package management system to harmonize all of the software packages. Users can install the full solution of CondSigDetector using the conda environment.
+CondSigDetector uses the [Miniconda3](http://conda.pydata.org/miniconda.html) package management system to harmonize all of the software packages. Users can install the full solution of CondSigDetector using the conda environment.
 
 Use the following commands to install Minicoda3：
 ``` bash
@@ -48,7 +48,7 @@ $ conda env create -f environment.yml
 # Activate the environment
 $ conda activate condsig_env
 # Install CondSigDetector
-$ conda install -c https://anaconda.org/yuzhaowei/condsig_detector/1.2.3/download/linux-64/condsig_detector-1.2.3-py37_0.tar.bz2
+$ conda install https://anaconda.org/yuzhaowei/condsig_detector/1.2.3/download/linux-64/condsig_detector-1.2.3-py37_0.tar.bz2
 ```
 
 ### Test CondSigDetector

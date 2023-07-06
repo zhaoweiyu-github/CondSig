@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# Time-stamp: <2022-11-08 Zhaowei Yu>
+# Time-stamp: <2023-06-20 Zhaowei Yu>
 
 """
-Description: CondSig detector v1.2.2
-Copyright (c) 2022 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
+Description: CondSig detector v1.2.3
+Copyright (c) 2023 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
 
 @status: first release 
-@version: v1.2.2
+@version: v1.2.3
 @author:  Zhaowei Yu
 @contact: zhaoweiyu@tongji.edu.cn
 """
@@ -17,7 +17,7 @@ Copyright (c) 2022 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
 
 import os,sys
 import argparse as ap
-import pkg_resources
+# import pkg_resources
 import pandas as pd
 
 # ------------------------------
@@ -141,6 +141,8 @@ def main():
 		info("4. Filter condensate-like signatures ... ")
 		if not os.path.isdir("CondSig"):
 			os.mkdir("CondSig")
+		if not os.path.isdir("Summary"):
+			os.mkdir("Summary")
 
 		sigFilter = FilterSig.SigFilter(args)
 		sigFilter.filter(df_valid_promoter_topics_all, "promoter")
@@ -150,7 +152,7 @@ def main():
 def prepare_argparser():
 	"""Prepare optparser object. New options will be added in this function first."""
 
-	description = "%(prog)s -- Condensate-like chromatin-associated protein co-occupancy Signatures"
+	description = "%(prog)s -- Condensate-like chromatin-associated protein co-occupancy signatures detector"
 	epilog = "For command line options of each command, type: %(prog)s COMMAND -h"
 
 	# top-level parser
@@ -178,19 +180,19 @@ def add_FilterSig_parser(subparsers):
 	group_input.add_argument( "--SigInputPath", dest = "Sig_InputPath", type = str, required = True, help = "Input LearnSig path. REQUIRED." )
 	group_input.add_argument( "--SigInputName", dest = "Sig_InputName", type = str, required = True, help = "Input LearnSig name. REQUIRED." )
 
-	group_input.add_argument( "--LLPS", dest = "LLPS", type = str, required = True, help = "Annotation of LLPS proteins. REQUIRED." )
-	group_input.add_argument( "--MLO", dest = "MLO", type = str, required = True, help = "Annotation of MLO component. REQUIRED." )
-	group_input.add_argument( "--PPI", dest = "PPI", type = str, required = True, help = "Annotation of protein-protein interaction. REQUIRED." )
-	group_input.add_argument( "--IDR", dest = "IDR", type = str, required = True, help = "Annotation of protein IDR properties. REQUIRED." )
-	group_input.add_argument( "--RBD", dest = "RBD", type = str, required = True, help = "Annotation of RNA-binding domain content of proteins. REQUIRED." )
-	group_input.add_argument( "--RBS", dest = "RBS", type = str, default = None, help = "Big wiggle track of genome-wide RNA-binding density. Default: None." )
+	group_input.add_argument( "--LLPS", dest = "LLPS", type = str, required = True, help = "Annotation of LLPS proteins, check demo file and format details in GitHub. REQUIRED." )
+	group_input.add_argument( "--MLO", dest = "MLO", type = str, required = True, help = "Annotation of MLO component, check demo file and format details in GitHub. REQUIRED." )
+	group_input.add_argument( "--PPI", dest = "PPI", type = str, required = True, help = "Annotation of protein-protein interaction, check demo file and format details in GitHub. REQUIRED." )
+	group_input.add_argument( "--IDR", dest = "IDR", type = str, required = True, help = "Annotation of protein IDR properties, check demo file and format details in GitHub. REQUIRED." )
+	group_input.add_argument( "--RBD", dest = "RBD", type = str, required = True, help = "Annotation of RNA-binding domain content of proteins, check demo file and format details in GitHub. REQUIRED." )
+	group_input.add_argument( "--RBS", dest = "RBS", type = str, default = None, help = "Big wiggle track of genome-wide RNA-binding density, check demo file and format details in GitHub. Default: None." )
 
 	group_input.add_argument( "--Threads", dest = "threads", type = int, default = 8, help = "The processes used of the job. Default:8." )
 
 	# group for output files
 	group_output = argparser_FilterSig.add_argument_group( "Output files arguments" )
 	group_output.add_argument( "--Name", dest = "name", type = str, default = None, help = "Output name. Default: Input LearnSig name." )
-	group_output.add_argument( "--OutDir", dest = "out_dir", type = str, default = None, help = "Output directory (absolute path required). Default: Input LearnSig path." )
+	group_output.add_argument( "--OutDir", dest = "out_dir", type = str, default = None, help = "Output directory. Default: Input LearnSig path." )
 
 
 def add_LearnSig_parser(subparsers):
@@ -300,7 +302,8 @@ def check_LearnSig_arguments(args):
 		os.mkdir(args.out_dir)
 
 	# check the annotation files for the given genome version (only hg38 and mm10 are supported)
-	anno_dir = pkg_resources.resource_filename(CondSig.__name__, "resource")
+	# anno_dir = pkg_resources.resource_filename(CondSig.__name__, "resource")
+	anno_dir = os.path.join(list(CondSig.__path__)[0], 'resource')
 	chromsize_file = "{0}_clean.chrom.sizes" . format(args.genome_version)
 	promoter_file = "{0}.promoter.3k.bed" . format(args.genome_version)
 	blacklist_file = "{0}-blacklist.v2.bed" . format(args.genome_version)
