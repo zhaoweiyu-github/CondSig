@@ -5,11 +5,11 @@
 
 **CondSig** (**Cond**ensate-like chromatin-associated proteins co-occupancy **Sig**nature) Detector is a comprehensive computational framework designed to concurrently predict the component CAPs (chromatin-associated proteins) and genomic loci of potential chromatin-associated biomolecular condensates. The computational framework first detects genome-wide CAP collaborations in specific loci by integrating ChIP-seq datasets, and then filters out those potentially involved in biomolecular condensation based on known condensation-related characteristics. 
 
-User can checkout all identified CondSigs in mESC and K562 in our database ([CondSigDB](https://compbio-zhanglab.org/CondSigDB/index.html)).
-
 <p align="center">
 <img src="./image/Schematic.png"/>
 </p>
+
+User can also checkout all identified CondSigs in mESC and K562 in our database ([CondSigDB](https://compbio-zhanglab.org/CondSigDB/index.html)).
 
 
 ## Change Log
