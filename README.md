@@ -9,7 +9,7 @@
 <img src="./image/Schematic.png"/>
 </p>
 
-User can also checkout all identified CondSigs in mESC and K562 in our database ([CondSigDB](https://compbio-zhanglab.org/CondSigDB/index.html)).
+User can also checkout all identified CondSigs in mESC and K562 in our database [CondSigDB](https://compbio-zhanglab.org/CondSigDB/index.html).
 
 
 ## Change Log
