@@ -3,11 +3,13 @@
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Version: 1.2.3](https://img.shields.io/badge/Version-1.2.3-brightgreen.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-**CondSig** (**Cond**ensate-like chromatin-associated proteins co-occupancy **Sig**nature) Detector is a comprehensive computational framework designed to concurrently predict the component CAPs (chromatin-associated proteins) and genomic loci of potential chromatin-associated biomolecular condensates. The computational framework first detects genome-wide CAP collaborations in specific loci by integrating ChIP-seq datasets, and then filters out those potentially involved in biomolecular condensation based on known condensation-related characteristics.
+**CondSig** (**Cond**ensate-like chromatin-associated proteins co-occupancy **Sig**nature) Detector is a comprehensive computational framework designed to concurrently predict the component CAPs (chromatin-associated proteins) and genomic loci of potential chromatin-associated biomolecular condensates. The computational framework first detects genome-wide CAP collaborations in specific loci by integrating ChIP-seq datasets, and then filters out those potentially involved in biomolecular condensation based on known condensation-related characteristics. 
 
 <p align="center">
 <img src="./image/Schematic.png"/>
 </p>
+
+User can also checkout all identified CondSigs in mESC and K562 in our database [CondSigDB](https://compbio-zhanglab.org/CondSigDB/index.html).
 
 
 ## Change Log
@@ -41,7 +43,7 @@ Use the following commands to install Minicoda3：
 $ wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
 $ bash Miniconda3-latest-Linux-x86_64.sh
 ```
-And then users can create an isolated environment for CondSigDetector with environment file [environment.yml](https://github.com/zhaoweiyu-github/CondSig/blob/main/environment.yml) and install through the following commands:
+And then users can create an isolated environment for CondSigDetector with environment file [environment.yml](https://raw.githubusercontent.com/zhaoweiyu-github/CondSig/main/environment.yml) and install through the following commands:
 ``` bash
 # Create environment for CondSigDetector
 $ conda env create -f environment.yml

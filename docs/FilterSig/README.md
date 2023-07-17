@@ -95,4 +95,9 @@ All annotation files and source codes to generate annotation file in demo are li
   * Big wiggle track of genome-wide RNA-binding density ([K562-D210N-V5ChIP_merged.bw](https://compbio-zhanglab.org/CondSigDB/data/GitHub/K562-D210N-V5ChIP_merged.bw)).
 
 ### Development
-Only condensation-related feature annotations for CAPs, for which ChIP-seq data is available in the Cistrome Data Browser, are provided here. Users can generate annotation files for additional CAPs by following the source codes provided above (the correct format of annotaiton files is requried).
+Only condensation-related feature annotations for CAPs, for which ChIP-seq data is available in the Cistrome Data Browser, are provided here. Users can generate annotation files for additional CAPs by following the source codes provided above (the correct format of annotation files is required).
+
+### Result
+All identified CondSigs, along with their associated CondSig-positive genomic loci can be found within the "FilterSig/Summary" folder. This folder is located under the output directory of "FilterSig" module.
+
+Users can checkout all identified CondSigs in mESC and K562 in our database ([CondSigDB](https://compbio-zhanglab.org/CondSigDB/index.html)).
