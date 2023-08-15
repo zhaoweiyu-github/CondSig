@@ -36,7 +36,7 @@ User can also checkout all identified CondSigs in mESC and K562 in our database 
 
 ### Installing the CondSigDetector workflow through conda
 
-CondSigDetector uses the [Miniconda3](http://conda.pydata.org/miniconda.html) package management system to harmonize all of the software packages. Users can install the full solution of CondSigDetector using the conda environment.
+CondSigDetector uses the [Miniconda3](http://conda.pydata.org/miniconda.html) package management system to harmonize all of the software packages. Users can install the full solution of CondSigDetector using the conda environment, which may take several minutes.
 
 Use the following commands to install Minicoda3：
 ``` bash
@@ -65,13 +65,13 @@ condsig_detector FilterSig --help
 
 ### LearnSig module
 
-LearnSig module identifies co-occupancy signatures to represent genome-wide specific collaborations of CAPs by integrating multiple ChIP-seq data in the same cell type. 
+The LearnSig module detects co-occupancy signatures, which depict genome-wide specific collaborations of CAPs. It achieves this by integrating multiple ChIP-seq datasets from the same cell type.
 
 User can checkout documentations and tutorials in [LearnSig](docs/LearnSig).
 
 ### FilterSig module
 
-FilterSig module filters out condensate-like co-occupancy signatures (CondSigs) from all co-occupancy signatures by integrating multi-modal condensation-related features. 
+The FilterSig module isolates condensate-like co-occupancy signatures (CondSigs) from the complete set of co-occupancy signatures. It accomplishes this by incorporating multi-modal condensation-related features. 
 
 User can checkout documentations and tutorials in [FilterSig](docs/FilterSig).
 
