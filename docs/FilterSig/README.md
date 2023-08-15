@@ -79,9 +79,7 @@ condsig_detector FilterSig \
 ### Output
 Each demo is expected to run for approximately 1~2 days on a high-performance computing cluster with multiple CPUs (Central Processing Units) and a large amount of RAM (Random Access Memory) using the parameter settings descibed above. 
 
-All identified CondSigs and assocaited genomic loci can be found within "FilterSig/Summary" folder. This folder is located under the output directory of "FilterSig" module. 
-
-CondSigDetector produces two separated summary tsv for promoter and non-promoter CondSigs. E.g., mESC_promoter_CondSigs.txt, mESC_nonpromoter_CondSigs.txt, and each summary tsv contains five columns:
+All identified CondSigs and assocaited genomic loci can be found within "FilterSig/Summary" folder. This folder is located under the output directory of "FilterSig" module.CondSigDetector produces two distinct summary TSV files for promoter and non-promoter CondSigs separately. For instance, "mESC_promoter_CondSigs.txt" and "mESC_nonpromoter_CondSigs.txt", and each summary TSV contains five columns:
   1. the name of CondSig
   2. component CAPs
   3. condensate-like features of the CondSig
