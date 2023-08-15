@@ -87,12 +87,10 @@ condsig_detector LearnSig \
 ### Output
 Each demo is expected to run for approximately 3 hours on a high-performance computing cluster with multiple CPUs (Central Processing Units) and a large amount of RAM (Random Access Memory) using the parameter settings descibed above. 
 
-All identified co-occupancy signature can be found within "LearnSig" folder. This folder is located under the output directory of "LearnSig" module. CondSigDetector generates two distinct summary TXT files for both promoter and non-promoter co-occupancy signatures. For instance, you can find files named 'mESC_valid_promoter_topics_all.txt' and 'mESC_valid_nonpromoter_topics_all.txt'.
+All identified co-occupancy signature can be found within "LearnSig" folder. This folder is located under the output directory of "LearnSig" module. CondSigDetector generates two distinct summary TXT files for both promoter and non-promoter co-occupancy signatures. For instance, you can find files named 'mESC_valid_promoter_topics_all.txt' and 'mESC_valid_nonpromoter_topics_all.txt'. This module does not produce the finalized identified CondSigs but is a prerequisite for the subsequent [FilterSig](../FilterSig/README.md) module.
+
+It should be recognized that the presence of random processes in biterm topic model may introduce a slight difference between the output of distinct trails.
 
 ## Notes
 
 ​The ChIP-seq data of CAPs were collected from Cistrome Data Browser and filtrated using a stringent quality control procedures. Datasets and meta data for mESC([mESC_peaks.tar.gz](https://compbio-zhanglab.org/CondSigDB/data/GitHub/mESC_peaks.tar.gz), [mESC_dataset_meta.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/mESC_dataset_meta.txt)) and K562([K562_peaks.tar.gz](https://compbio-zhanglab.org/CondSigDB/data/GitHub/K562_peaks.tar.gz), [K562_dataset_meta.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/K562_dataset_meta.txt)) were released.
-
-It should be recognized that the presence of random processes in biterm topic model may introduce a slight difference between the output of distinct trails.
-
-This module does not produce the finalized identified CondSigs but is a prerequisite for the subsequent [FilterSig](../FilterSig/README.md) module.

@@ -82,7 +82,7 @@ Each demo is expected to run for approximately 1~2 days on a high-performance co
 All identified CondSigs and assocaited genomic loci can be found within "FilterSig/Summary" folder. This folder is located under the output directory of "FilterSig" module. 
 
 CondSigDetector produces two separated summary tsv for promoter and non-promoter CondSigs. E.g., mESC_promoter_CondSigs.txt, mESC_nonpromoter_CondSigs.txt, and each summary tsv contains five columns:
-1. the name of CondSig, 2. component CAPs, 3. condensate-like features of the CondSigs, 4. the count of condensate-like features, 5. mean AUROC.
+1. the name of CondSig, 2. component CAPs, 3. condensate-like features of the CondSig, 4. the count of condensate-like features, 5. mean AUROC.
 
 ```
 CondSig	component_CAP	qualified_CL_features	qualified_CL_features_count	mean_AUROC
