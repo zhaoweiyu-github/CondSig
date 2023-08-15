@@ -87,7 +87,7 @@ condsig_detector LearnSig \
 ### Output
 Each demo is expected to run for approximately 3 hours on a high-performance computing cluster with multiple CPUs (Central Processing Units) and a large amount of RAM (Random Access Memory) using the parameter settings descibed above. 
 
-All identified co-occupancy signature can be found within "LearnSig" folder. This folder is located under the output directory of "LearnSig" module. E.g., mESC_valid_promoter_topics_all.txt, mESC_valid_nonpromoter_topics_all.txt
+All identified co-occupancy signature can be found within "LearnSig" folder. This folder is located under the output directory of "LearnSig" module. CondSigDetector produces two separated summary tsv for promoter and non-promoter co-occupancy signatures. E.g., mESC_valid_promoter_topics_all.txt, mESC_valid_nonpromoter_topics_all.txt.
 
 ## Notes
 
