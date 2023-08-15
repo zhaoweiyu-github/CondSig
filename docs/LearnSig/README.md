@@ -87,7 +87,7 @@ condsig_detector LearnSig \
 ### Output
 Each demo is expected to run for approximately 3 hours on a high-performance computing cluster with multiple CPUs (Central Processing Units) and a large amount of RAM (Random Access Memory) using the parameter settings descibed above. 
 
-All identified co-occupancy signature can be found within "LearnSig" folder. This folder is located under the output directory of "LearnSig" module. CondSigDetector generates two distinct summary TXT files for both promoter and non-promoter co-occupancy signatures. For instance, you can find files named 'mESC_valid_promoter_topics_all.txt' and 'mESC_valid_nonpromoter_topics_all.txt'. This module does not produce the finalized identified CondSigs but is a prerequisite for the subsequent [FilterSig](../FilterSig/README.md) module.
+All identified co-occupancy signature can be found within "LearnSig" folder. This folder is located under the output directory of "LearnSig" module. CondSigDetector generates two distinct summary TXT files for promoter and non-promoter co-occupancy signatures separately. For instance, you can find files named 'mESC_valid_promoter_topics_all.txt' and 'mESC_valid_nonpromoter_topics_all.txt'. This module does not produce the finalized identified CondSigs but is a prerequisite for the subsequent [FilterSig](../FilterSig/README.md) module.
 
 It should be recognized that the presence of random processes in biterm topic model may introduce a slight difference between the output of distinct trails.
 
