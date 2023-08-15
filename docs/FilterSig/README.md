@@ -77,14 +77,14 @@ condsig_detector FilterSig \
 ```
 
 ### Output
-Each demo is expected to run for approximately 1~2 days on a high-performance computing cluster with multiple CPUs (Central Processing Units) and a large amount of RAM (Random Access Memory) using the parameter settings descibed above. 
+Each demo is expected to run for approximately 1 to 2 days on a high-performance computing cluster equipped with multiple CPUs (Central Processing Units) and a large amount of RAM (Random Access Memory) using the parameter settings described above. 
 
-All identified CondSigs and assocaited genomic loci can be found within "FilterSig/Summary" folder. This folder is located under the output directory of "FilterSig" module.CondSigDetector produces two distinct summary TSV files for promoter and non-promoter CondSigs separately. For instance, "mESC_promoter_CondSigs.txt" and "mESC_nonpromoter_CondSigs.txt", and each summary TSV contains five columns:
-  1. the name of CondSig
-  2. component CAPs
-  3. condensate-like features of the CondSig
-  4. the count of condensate-like features
-  5. mean AUROC
+All identified CondSigs and associated genomic loci can be found within "FilterSig/Summary" folder. This folder is located under the output directory of "FilterSig" module.CondSigDetector produces two distinct summary TSV files for promoter and non-promoter CondSigs separately. For instance, you can find files named "mESC_promoter_CondSigs.txt" and "mESC_nonpromoter_CondSigs.txt" after running the demo for mESC, and each summary TSV file contains five columns:
+  1. The name of CondSig
+  2. Component CAPs
+  3. Condensate-like features of the CondSig
+  4. The count of condensate-like features
+  5. Mean AUROC
 
 ```
 CondSig	component_CAP	qualified_CL_features	qualified_CL_features_count	mean_AUROC
@@ -114,4 +114,4 @@ All annotation files and source codes to generate annotation file in demo are li
   * Big wiggle track of genome-wide RNA-binding density ([K562-D210N-V5ChIP_merged.bw](https://compbio-zhanglab.org/CondSigDB/data/GitHub/K562-D210N-V5ChIP_merged.bw)).
 
 ### Development
-Only condensation-related feature annotations for CAPs, for which ChIP-seq data is available in the Cistrome Data Browser, are provided here. Users can generate annotation files for additional CAPs by following the source codes provided above (the correct format of annotation files is required).
+Only condensation-related feature annotations for CAPs, for which ChIP-seq data are available in the Cistrome Data Browser, are provided here. Users can generate annotation files for additional CAPs by following the source codes provided above (the correct format of annotation files is required).
