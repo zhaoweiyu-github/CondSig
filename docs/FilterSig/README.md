@@ -76,6 +76,25 @@ condsig_detector FilterSig \
 --RBS K562-D210N-V5ChIP_merged.bw
 ```
 
+### Output
+Each demo is expected to run for approximately 1~2 days on a high-performance computing cluster with multiple CPUs (Central Processing Units) and a large amount of RAM (Random Access Memory) using the parameter settings descibed above. 
+
+All identified CondSigs and assocaited genomic loci can be found within "FilterSig/Summary" folder. This folder is located under the output directory of "FilterSig" module.CondSigDetector produces two distinct summary TSV files for promoter and non-promoter CondSigs separately. For instance, "mESC_promoter_CondSigs.txt" and "mESC_nonpromoter_CondSigs.txt", and each summary TSV contains five columns:
+  1. the name of CondSig
+  2. component CAPs
+  3. condensate-like features of the CondSig
+  4. the count of condensate-like features
+  5. mean AUROC
+
+```
+CondSig	component_CAP	qualified_CL_features	qualified_CL_features_count	mean_AUROC
+mESC_rep3_promoter_CondSig_1	mESC_GSM930151_KDM2B,mESC_GSM2460999_KDM4C,mESC_GSM1341311_TDG,mESC_GSM1603269_RXRA,mESC_GSM3196078_TET2	IDR,LLPS,MLO,PPI,RBP	5	0.6678
+mESC_rep3_promoter_CondSig_2	mESC_GSM930151_KDM2B,mESC_GSM2192644_AEBP2,mESC_GSM1693794_HEXIM1,mESC_GSM2460999_KDM4C,mESC_GSM651192_DPY30,mESC_GSM1372576_ATRX,mESC_GSM2142337_FAM60A,mESC_GSM1399511_SUZ12	IDR,LLPS,MLO,PPI,RBP	5	0.6538
+mESC_rep3_promoter_CondSig_3	mESC_GSM1355155_POU5F1,mESC_GSM687282_KDM1A,mESC_GSM2417143_SOX2,mESC_GSM1563242_RAD23B,mESC_GSM2123560_NANOG,mESC_GSM1208218_KLF5,mESC_GSM2588408_KMT2D,mESC_GSM1258240_ASH2L	IDR,LLPS,MLO,PPI	4	0.7625
+```
+
+Users can checkout all identified CondSigs in mESC and K562 in our database ([CondSigDB](https://compbio-zhanglab.org/CondSigDB/index.html)).
+
 ## Notes
 
 ### Annotation files
@@ -96,8 +115,3 @@ All annotation files and source codes to generate annotation file in demo are li
 
 ### Development
 Only condensation-related feature annotations for CAPs, for which ChIP-seq data is available in the Cistrome Data Browser, are provided here. Users can generate annotation files for additional CAPs by following the source codes provided above (the correct format of annotation files is required).
-
-### Result
-All identified CondSigs, along with their associated CondSig-positive genomic loci can be found within the "FilterSig/Summary" folder. This folder is located under the output directory of "FilterSig" module.
-
-Users can checkout all identified CondSigs in mESC and K562 in our database ([CondSigDB](https://compbio-zhanglab.org/CondSigDB/index.html)).
