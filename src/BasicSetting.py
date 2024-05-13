@@ -20,7 +20,7 @@ logging.basicConfig(level = logging.INFO,
                     filemode = 'w'
                     )
 
-software_version = "v1.2.3"
+software_version = "v1.3.0"
 
 # ----------------
 #  Misc functions

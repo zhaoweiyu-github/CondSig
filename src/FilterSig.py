@@ -14,9 +14,9 @@ from functools import partial
 import multiprocessing
 from itertools import combinations
 
-import shap
+# import shap
 from sklearn import metrics
-from xgboost.sklearn import XGBClassifier
+# from xgboost.sklearn import XGBClassifier
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -82,50 +82,62 @@ class SigFilter():
 				if roc_status[condensate_features_pos_top3].mean() >= self.mean_auc_threshold:
 					CLsig_features_list.append([SigName, ",".join(condensate_features_pos), len(condensate_features_pos), roc_status[condensate_features_pos].mean()])
 
+		if len(CLsig_features_list) == 0:
+			info('No qualified CondSigs were identified. Please try more with larger dataset or lower threshold.')
+			sys.exit(1)
+		  
 		df_CLsig_features = pd.DataFrame(CLsig_features_list)
-		# df_CLsig_features.columns = ["signature_name", "qualified_CL_features", "qualified_CL_features_count", "mean_AUROC", "mean_feature_importance"]
 		df_CLsig_features.columns = ["signature_name", "qualified_CL_features", "qualified_CL_features_count", "mean_AUROC"]
 		df_CLsig_features.index = df_CLsig_features.loc[:, "signature_name"].values
 		df_CLsig_features.to_csv("CondSig/{0}_{1}_nonunique_condensate_like_signatures.txt" . format(self.args.name, region), header = True, index = False, sep = "\t")
 		CLsigs = df_CLsig_features.loc[:, "signature_name"].values
 
 		# remove redudant condensate-like signatures
-		df_filtered_topics.index = df_filtered_topics.loc[:, "topic_name"].values
-		df_filtered_topics_CLsigs = df_filtered_topics.loc[CLsigs, :]
-		# sort signatures based on count and level of enriched condensation features
-		df_CLsig_features_sorted = df_CLsig_features.sort_values(by = ["qualified_CL_features_count", "mean_AUROC"], ascending = False)
+		if df_CLsig_features.shape[0] > 1:
+			df_filtered_topics.index = df_filtered_topics.loc[:, "topic_name"].values
+			df_filtered_topics_CLsigs = df_filtered_topics.loc[CLsigs, :]
+			# sort signatures based on count and level of enriched condensation features
+			df_CLsig_features_sorted = df_CLsig_features.sort_values(by = ["qualified_CL_features_count", "mean_AUROC"], ascending = False)
 
-		list_JI_sigs = []
-		for sig_i, sig_j in combinations(df_CLsig_features_sorted.index.values, 2):
-			TR_sig_i = df_filtered_topics_CLsigs.loc[sig_i, "component_word"].split(",")
-			TR_sig_j = df_filtered_topics_CLsigs.loc[sig_j, "component_word"].split(",")
+			list_JI_sigs = []
+			for sig_i, sig_j in combinations(df_CLsig_features_sorted.index.values, 2):
+				TR_sig_i = df_filtered_topics_CLsigs.loc[sig_i, "component_word"].split(",")
+				TR_sig_j = df_filtered_topics_CLsigs.loc[sig_j, "component_word"].split(",")
 
-			# calculate JI between top 5 sig-i-pos TRs and sig-j-pos TRs
-			JI_TR_top5 = len(np.intersect1d(TR_sig_i[:5], TR_sig_j[:5])) / len(np.union1d(TR_sig_i[:5], TR_sig_j[:5])) # v.1.2.2
+				# calculate JI between top 5 sig-i-pos TRs and sig-j-pos TRs
+				JI_TR_top5 = len(np.intersect1d(TR_sig_i[:5], TR_sig_j[:5])) / len(np.union1d(TR_sig_i[:5], TR_sig_j[:5])) # v.1.2.2
 			
-			# calculate JI between sig-i-pos and sig-j-pos sites
-			focus_TR_i = "_".join(sig_i.split("_")[:-1])
-			sig_idx_i = sig_i.split("_")[-1]
-			focus_TR_j = "_".join(sig_j.split("_")[:-1])
-			sig_idx_j = sig_j.split("_")[-1]
-			
-			list_JI_sigs.append([sig_i, sig_j, JI_TR_top5])
+				# calculate JI between sig-i-pos and sig-j-pos sites
+				focus_TR_i = "_".join(sig_i.split("_")[:-1])
+				sig_idx_i = sig_i.split("_")[-1]
+				focus_TR_j = "_".join(sig_j.split("_")[:-1])
+				sig_idx_j = sig_j.split("_")[-1]
+				
+				list_JI_sigs.append([sig_i, sig_j, JI_TR_top5])
 
-		df_JI_sigs = pd.DataFrame(list_JI_sigs)
-		df_JI_sigs.columns = ["primary", "secondary", "JI_TR_top5"]
+			df_JI_sigs = pd.DataFrame(list_JI_sigs)
+			df_JI_sigs.columns = ["primary", "secondary", "JI_TR_top5"]
 
-		df_JI_sigs_grouped = df_JI_sigs.groupby("primary")
-		redundant_sigs = []
-		for group, df_grpup in df_JI_sigs_grouped:
-			if group not in redundant_sigs:
-				redundant_sigs += list(df_grpup.loc[df_grpup["JI_TR_top5"] > self.JI_TR_top5_threshold, "secondary"].values)
-		df_unique_CLsig = df_filtered_topics_CLsigs.loc[np.setdiff1d(df_filtered_topics_CLsigs.index.values, redundant_sigs), :]
-		df_unique_CLsig_featues = df_CLsig_features.loc[df_unique_CLsig.index.values, ["qualified_CL_features", "qualified_CL_features_count", "mean_AUROC"]]
+			df_JI_sigs_grouped = df_JI_sigs.groupby("primary")
+			redundant_sigs = []
+			for group, df_grpup in df_JI_sigs_grouped:
+				if group not in redundant_sigs:
+					redundant_sigs += list(df_grpup.loc[df_grpup["JI_TR_top5"] > self.JI_TR_top5_threshold, "secondary"].values)
+			df_unique_CLsig = df_filtered_topics_CLsigs.loc[np.setdiff1d(df_filtered_topics_CLsigs.index.values, redundant_sigs), :]
+			df_unique_CLsig_featues = df_CLsig_features.loc[df_unique_CLsig.index.values, ["qualified_CL_features", "qualified_CL_features_count", "mean_AUROC"]]
 
-		df_unique_CLsig_anno = pd.concat([df_unique_CLsig, df_unique_CLsig_featues], axis = 1)
-		df_unique_CLsig_anno = df_unique_CLsig_anno.sort_values(by = ["qualified_CL_features_count", "mean_AUROC"], ascending = False)
-		df_unique_CLsig_anno.columns = ['signature_name', 'component_CAP', 'qualified_CL_features', 'qualified_CL_features_count', 'mean_AUROC']
-		
+			df_unique_CLsig_anno = pd.concat([df_unique_CLsig, df_unique_CLsig_featues], axis = 1)
+			df_unique_CLsig_anno = df_unique_CLsig_anno.sort_values(by = ["qualified_CL_features_count", "mean_AUROC"], ascending = False)
+			df_unique_CLsig_anno.columns = ['signature_name', 'component_CAP', 'qualified_CL_features', 'qualified_CL_features_count', 'mean_AUROC']
+		elif df_CLsig_features.shape[0] == 1:
+			df_filtered_topics.index = df_filtered_topics.loc[:, "topic_name"].values
+			df_filtered_topics_CLsigs = df_filtered_topics.loc[CLsigs, :]
+			df_unique_CLsig = df_filtered_topics_CLsigs.copy()
+			df_unique_CLsig_featues = df_CLsig_features.loc[df_unique_CLsig.index.values, ["qualified_CL_features", "qualified_CL_features_count", "mean_AUROC"]]
+
+			df_unique_CLsig_anno = pd.concat([df_unique_CLsig, df_unique_CLsig_featues], axis = 1)
+			df_unique_CLsig_anno = df_unique_CLsig_anno.sort_values(by = ["qualified_CL_features_count", "mean_AUROC"], ascending = False)
+			df_unique_CLsig_anno.columns = ['signature_name', 'component_CAP', 'qualified_CL_features', 'qualified_CL_features_count', 'mean_AUROC']
 		df_unique_CLsig_anno.to_csv("CondSig/{0}_{1}_unique_condensate_like_signatures.txt" . format(self.args.name, region), header = True, index = False, sep = "\t")
 
 		# summary fraction
@@ -207,22 +219,22 @@ class SigEval():
 			), header = True, sep = "\t", index = False)
 
 		# plot bar plot for auc
-		logging.getLogger().setLevel(logging.ERROR)
-		fig, ax1 = plt.subplots(figsize = (4.5,4), nrows = 1, ncols = 1)
-		mycmap = cm.get_cmap("viridis")
-		_bar = ax1.barh(df_auc.loc[:, "feature"], df_auc.loc[:, "AUROC"], color = mycmap(df_auc.loc[:, "AUROC"]), height = 0.7)
-		ax1.axvline(x = 0.6, linestyle = "--", color = "grey", linewidth = 1.5)
-		ax1.set_xlabel("AUROC")
-		ax1.set_title("AUROC")
-		ax1.set_xlim(0, 1)
+		# logging.getLogger().setLevel(logging.ERROR)
+		# fig, ax1 = plt.subplots(figsize = (4.5,4), nrows = 1, ncols = 1)
+		# mycmap = cm.get_cmap("viridis")
+		# _bar = ax1.barh(df_auc.loc[:, "feature"], df_auc.loc[:, "AUROC"], color = mycmap(df_auc.loc[:, "AUROC"]), height = 0.7)
+		# ax1.axvline(x = 0.6, linestyle = "--", color = "grey", linewidth = 1.5)
+		# ax1.set_xlabel("AUROC")
+		# ax1.set_title("AUROC")
+		# ax1.set_xlim(0, 1)
 
-		plt.subplots_adjust(left = 0.45, right = 0.95, bottom = 0.15)
-		plt.savefig("ROC/{0}_{1}_{2}_AUROC.pdf" . format(
-				focus_CAP,
-				region,
-				sig_idx))
-		plt.close()
-		logging.getLogger().setLevel(logging.INFO)
+		# plt.subplots_adjust(left = 0.45, right = 0.95, bottom = 0.15)
+		# plt.savefig("ROC/{0}_{1}_{2}_AUROC.pdf" . format(
+		# 		focus_CAP,
+		# 		region,
+		# 		sig_idx))
+		# plt.close()
+		# logging.getLogger().setLevel(logging.INFO)
 
 
 class SigFE():
@@ -231,14 +243,12 @@ class SigFE():
 	def __init__(self, args):
 
 		self.args = args
-		
-		self.df_peakov = pd.read_csv("{0}/{1}_1kb_bins_peakov.bed" . format(self.args.Sig_InputPath, self.args.Sig_InputName), header = 0, sep = "\t", index_col = "name")
+		self.df_peakov = pd.read_csv("{0}/{1}_1kb_bins_peakov.bed" . format(self.args.Sig_InputPath, self.args.Sig_InputName), header = 0, sep = "\t", index_col = "name")		
 		self.df_LLPS = pd.read_csv(self.args.LLPS, header = 0, sep = "\t").dropna()
 		self.df_MLO = pd.read_csv(self.args.MLO, header = 0, sep = "\t").dropna()
 		self.df_PPI_merged = pd.read_csv(self.args.PPI, header = 0, sep = "\t")
 
 		# self.tss_file = self.args.genome_annotation.TSS_file
-		
 		self.df_dataset = pd.read_csv(self.args.data_annotation, header = None, sep = "\t").iloc[:,0:4]
 		self.df_dataset.columns = ["factor", "label", "file", "uniprot_id"]
 		self.df_dataset.index = self.df_dataset.loc[:, "label"].values
@@ -246,12 +256,11 @@ class SigFE():
 		if sum(count_uniprot_id > 1) > 0:
 			error("More than 1 CAPs are assigned to the same uniprot id ({0}), please check it and don't use redudant data for each CAP." . format(uni_uniprot_id[count_uniprot_id > 1]))
 			sys.exit(1)
-
+		
 		df_peakov_filtered = pd.read_csv("{0}/{1}_1kb_bins_peakov_filtered.bed" . format(self.args.Sig_InputPath, self.args.Sig_InputName), header = 0, sep = "\t", index_col = "name")
 		promoter_bins = pd.read_csv("{0}/{1}_1kb_bins_peakov_promoter.bed" . format(self.args.Sig_InputPath, self.args.Sig_InputName), header = None, sep = "\t").iloc[:,3].values
 		self.df_peakov_filtered_promoter = df_peakov_filtered.loc[df_peakov_filtered.index.isin(promoter_bins),:]
 		self.df_peakov_filtered_nonpromoter = df_peakov_filtered.loc[~df_peakov_filtered.index.isin(promoter_bins),:]		
-		
 
 	def FE_preprocess(self):
 
@@ -328,12 +337,6 @@ class SigFE():
 
 		df_peakov_sig_pos = self.df_peakov.loc[pos_sites, potential_combinatorial_TRs].copy()
 		df_peakov_sig_neg = self.df_peakov.loc[neg_sites, potential_combinatorial_TRs].copy()
-		# info(df_peakov_sig_pos.shape)
-		# info(df_peakov_sig_neg.shape)
-		# info(np.mean(df_peakov_sig_pos.sum(axis = 1)))
-		# info(np.mean(df_peakov_sig_neg.sum(axis = 1)))
-
-		# return(None)
 
 		# convert factor label to uniprot ids
 		df_peakov_sig_pos_uids = df_peakov_sig_pos.copy()
@@ -532,62 +535,75 @@ def roc_analysis_balanced(df_sig_pos_FE, df_sig_neg_FE, sampling_count):
 
 	return(df_auc)
 
-
 def PPI_frequency_cal(df_PPI_dataset, df_peakov_selected):
-	"""calculate protein-protein interaction frequency"""
+	""" Calculate protein-protein interaction frequency"""
 
+	interaction_pairs = set(
+		(a, b) for a, b in zip(
+			df_PPI_dataset["SWISS-PROT Accessions Interactor A"],
+			df_PPI_dataset["SWISS-PROT Accessions Interactor B"]
+		)
+	)
+	
 	PPI_frequencies = []
 	for index, row in df_peakov_selected.iterrows():
-		peakov_factor = row[row > 0].index.values
-		peakov_factor_paired_count = len(peakov_factor) * (len(peakov_factor) - 1) * 0.5 # All potential pairs of N occupied factors: C(N,2)
-		PPI_peakov_factors_paired_count = df_PPI_dataset.loc[(
-				(
-				df_PPI_dataset["SWISS-PROT Accessions Interactor A"].isin(peakov_factor)
-				) & (
-				df_PPI_dataset["SWISS-PROT Accessions Interactor B"].isin(peakov_factor)
-				)
-			), :].shape[0]
-		PPI_frequency = PPI_peakov_factors_paired_count / peakov_factor_paired_count
+		occupied_factors = set(row[row > 0].index)
+		valid_pairs = sum((i, j) in interaction_pairs for i in occupied_factors for j in occupied_factors if i != j)
+		total_possible_pairs = len(occupied_factors) * (len(occupied_factors) - 1) / 2
+		PPI_frequency = valid_pairs / total_possible_pairs if total_possible_pairs > 0 else 0
 		PPI_frequencies.append(PPI_frequency)
 
-	return(PPI_frequencies)
+	return PPI_frequencies
 
 def LLPS_frequency_cal(df_LLPS_status, df_peakov_selected):
-	"""calculate LLPS frequency of occupied factors"""
-	
-	df_LLPS_frequencies = df_peakov_selected * df_LLPS_status.loc[df_peakov_selected.columns.values, "status"] # 0/1 matrix * 0/1 status array
-	LLPS_frequencies = np.array(df_LLPS_frequencies.sum(axis = 1) / df_peakov_selected.sum(axis = 1))
-		
-	return(LLPS_frequencies)
+	""" Calculate LLPS frequency of occupied factors """
+	selected_status = df_LLPS_status.loc[df_peakov_selected.columns, 'status']
+	numerator = (df_peakov_selected * selected_status).sum(axis=1)
+	denominator = df_peakov_selected.sum(axis=1)
+	LLPS_frequencies = numerator / denominator.replace(0, np.nan)
+	return LLPS_frequencies.values
 
 def MLO_frequency_cal(df_MLO, df_peakov_selected):
-	"""calculate MLO frequency of occupied factors"""
-
+	df_MLO['Uniprot_IDs'] = df_MLO['Uniprot_IDs'].apply(lambda x: set(x.split(',')))
 	MLO_protein_frequencies = []
-	for index, row in df_peakov_selected.iterrows():
-		peakov_uids = row[row > 0].index.values
-		MLO_protein = []
-		for index, row in df_MLO.iterrows():
-			peakov_factor_inside_condensate = np.intersect1d(peakov_uids, row["Uniprot_IDs"].split(","))
-			if(len(peakov_factor_inside_condensate)) >= 2:
-				MLO_protein += peakov_factor_inside_condensate.tolist() # count factors co-occured in the same condensate with other co-occupied factor
-				
-		MLO_protein_frequency = len(np.unique(MLO_protein)) / len(peakov_uids)
-		MLO_protein_frequencies.append(MLO_protein_frequency)
 
-	return(MLO_protein_frequencies)
+	# Iterate over rows in df_peakov_selected
+	for peakov_uids in df_peakov_selected.to_numpy():
+		# Filter out zero values and get indices
+		active_indices = peakov_uids > 0
+		peakov_uids_set = set(df_peakov_selected.columns[active_indices])
+		
+		# Initialize list for MLO proteins
+		MLO_protein = set()
+
+		# Vectorized intersection of sets
+		for uniprot_ids in df_MLO['Uniprot_IDs']:
+			intersection = peakov_uids_set & uniprot_ids
+			if len(intersection) >= 2:
+				MLO_protein.update(intersection)
+		
+		# Calculate frequency
+		if peakov_uids_set:
+			MLO_protein_frequency = len(MLO_protein) / len(peakov_uids_set)
+			MLO_protein_frequencies.append(MLO_protein_frequency)
+		else:
+			MLO_protein_frequencies.append(0)  # Avoid division by zero
+
+	return MLO_protein_frequencies
 
 def disorder_frequency_cal(df_IDR_status, df_peakov_selected):
 		
-	df_disorder_frequencies = df_peakov_selected * df_IDR_status.loc[df_peakov_selected.columns.values, "status"]
-	disorder_frequencies = np.array(df_disorder_frequencies.sum(axis = 1) / df_peakov_selected.sum(axis = 1))
-
+	selected_status = df_IDR_status.loc[df_peakov_selected.columns.values, "status"]
+	numerator = (df_peakov_selected * selected_status).sum(axis = 1)
+	denominator = df_peakov_selected.sum(axis=1)
+	disorder_frequencies = numerator / denominator.replace(0, np.nan)
 	return(disorder_frequencies)
 
 def RBD_frequency_cal(df_RBD_status, df_peakov_selected):
 		
-	df_RBD_frequencies = df_peakov_selected * df_RBD_status.loc[df_peakov_selected.columns.values, "status"]
-	RBD_frequencies = np.array(df_RBD_frequencies.sum(axis = 1) / df_peakov_selected.sum(axis = 1))
+	selected_status = df_RBD_status.loc[df_peakov_selected.columns.values, "status"]
+	numerator = (df_peakov_selected * selected_status).sum(axis = 1)
+	denominator = df_peakov_selected.sum(axis=1)
+	RBD_frequencies = numerator / denominator.replace(0, np.nan)
 
 	return(RBD_frequencies)
-
