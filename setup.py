@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-# Time-stamp: <2023-06-20 Zhaowei Yu>
+# Time-stamp: <2024-05-11 Zhaowei Yu>
 
 """
-Description: CondSig detector v1.2.3
-Copyright (c) 2023 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
+Description: CondSig detector v1.3.0
+Copyright (c) 2024 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
 
 @status: first release 
-@version: v1.2.3
+@version: v1.3.0
 @author:  Zhaowei Yu
 @contact: zhaoweiyu@tongji.edu.cn
 """
@@ -20,7 +20,7 @@ except ImportError:
 def main():
 	setup(
 		name = "CondSig",
-		version = "1.2.3",
+		version = "1.3.0",
 		author = "Zhaowei Yu",
 		author_email = "zhaoweiyu@tongji.edu.cn",
 		description = "A computational framework to detect Condensate-like chromatin-associated protein co-occupancy Signatures.",
