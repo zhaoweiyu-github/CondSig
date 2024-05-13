@@ -77,7 +77,7 @@ condsig_detector FilterSig \
 ```
 
 ### Output
-FilterSig for mESC or K562 is expected to run for approximately 8 or 5 hours on a high-performance computing cluster equipped with 10 CPUs (Central Processing Units) and a large amount of RAM (Random Access Memory) using the parameter settings described above. 
+FilterSig for mESC or K562 is expected to run for approximately 8 or 5 hours on a high-performance computing cluster equipped with at least 10 CPUs (Central Processing Units) and at least 64GB RAM (Random Access Memory) using the parameter settings described above. 
 
 All identified CondSigs and associated genomic loci can be found within "FilterSig/Summary" folder. This folder is located under the output directory of "FilterSig" module.CondSigDetector produces two distinct summary TXT files for promoter and non-promoter CondSigs separately. For instance, you can find files named "mESC_promoter_CondSigs.txt" and "mESC_nonpromoter_CondSigs.txt" after running the demo for mESC, and each summary TXT file contains five columns:
   1. The name of CondSig
