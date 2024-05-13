@@ -1,12 +1,12 @@
-#!/usr/bin/env python3
-# Time-stamp: <2023-06-20 Zhaowei Yu>
+#!/root/anaconda3/envs/condsig_env/bin/python
+# Time-stamp: <2024-05-11 Zhaowei Yu>
 
 """
-Description: CondSig detector v1.2.3
-Copyright (c) 2023 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
+Description: CondSig detector v1.3.0
+Copyright (c) 2024 Zhaowei Yu <zhaoweiyu@tongji.edu.cn>
 
-@status: first release 
-@version: v1.2.3
+@status: second release 
+@version: v1.3.0
 @author:  Zhaowei Yu
 @contact: zhaoweiyu@tongji.edu.cn
 """
@@ -83,6 +83,8 @@ def main():
 		df_valid_promoter_topics_all.to_csv("{0}_valid_promoter_topics_all.txt" . format(args.name), header = True, sep = "\t", index = False)
 		df_valid_nonpromoter_topics_all.to_csv("{0}_valid_nonpromoter_topics_all.txt" . format(args.name), header = True, sep = "\t", index = False)
 
+		info("LearnSig finished!")
+
 	### FilterSig
 	if subcommand == "FilterSig":
 		args = check_FilterSig_arguments(args)
@@ -147,6 +149,8 @@ def main():
 		sigFilter = FilterSig.SigFilter(args)
 		sigFilter.filter(df_valid_promoter_topics_all, "promoter")
 		sigFilter.filter(df_valid_nonpromoter_topics_all, "nonpromoter")
+  
+		info("FilterSig finished!")
 
 
 def prepare_argparser():
