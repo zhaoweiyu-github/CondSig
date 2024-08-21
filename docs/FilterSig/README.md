@@ -106,11 +106,11 @@ All annotation files and source codes to generate annotation file in demo are li
   * Annotation of protein IDR properties ([mouse_MobiDB_lite.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/mouse_MobiDB_lite.txt), [source code](../../example/generate_IDR_annotation.ipynb)).
   * Annotation of RNA-binding domain content of proteins ([mouse_TriPepSVM_RBP.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/mouse_TriPepSVM_RBP.txt), [source code](../../example/generate_RBP_annotation.ipynb)).
 * K562
-  * Annotation of LLPS proteins ([LLPS_mouseExtended.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/LLPS_mouseExtended.txt), [source code](../../example/generate_LLPS_annotation.ipynb)).
-  * Annotation of MLO component ([MLO_mouseExtended_merged.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/MLO_mouseExtended_merged.txt), [source code](../../example/generate_MLO_annotation.ipynb)).
-  * Annotation of protein-protein interaction ([PPI_mouse_merged.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/PPI_mouse_merged.txt), [source code](../../example/generate_PPI_annotation.ipynb)).
-  * Annotation of protein IDR properties ([mouse_MobiDB_lite.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/mouse_MobiDB_lite.txt), [source code](../../example/generate_IDR_annotation.ipynb)).
-  * Annotation of RNA-binding domain content of proteins ([mouse_TriPepSVM_RBP.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/mouse_TriPepSVM_RBP.txt), [source code](../../example/generate_RBP_annotation.ipynb)).
+  * Annotation of LLPS proteins ([LLPS_human_merged.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/LLPS_human_merged.txt), [source code](../../example/generate_LLPS_annotation.ipynb)).
+  * Annotation of MLO component ([MLO_human_merged.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/MLO_human_merged.txt), [source code](../../example/generate_MLO_annotation.ipynb)).
+  * Annotation of protein-protein interaction ([PPI_human_merged.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/PPI_human_merged.txt), [source code](../../example/generate_PPI_annotation.ipynb)).
+  * Annotation of protein IDR properties ([human_MobiDB_lite.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/human_MobiDB_lite.txt), [source code](../../example/generate_IDR_annotation.ipynb)).
+  * Annotation of RNA-binding domain content of proteins ([human_TriPepSVM_RBP.txt](https://compbio-zhanglab.org/CondSigDB/data/GitHub/human_TriPepSVM_RBP.txt), [source code](../../example/generate_RBP_annotation.ipynb)).
   * Big wiggle track of genome-wide RNA-binding density ([K562-D210N-V5ChIP_merged.bw](https://compbio-zhanglab.org/CondSigDB/data/GitHub/K562-D210N-V5ChIP_merged.bw)).
 
 ### Development

@@ -80,4 +80,4 @@ User can checkout documentations and tutorials in [FilterSig](docs/FilterSig).
 
 ## Citation
 
--
+Yu, Z., Wang, Q., Zhang, Q. et al. Decoding the genomic landscape of chromatin-associated biomolecular condensates. Nat Commun 15, 6952 (2024). [https://doi.org/10.1038/s41467-024-51426-2](https://doi.org/10.1038/s41467-024-51426-2).
