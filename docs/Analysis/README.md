@@ -1,9 +1,10 @@
 # CondSigDetector (Analysis)
 
 
-## CondSig-positive and -negative peaks for each CAP
+### CondSig-positive and -negative peaks for each CAP
 
-### User can find the analyzed CondSig-positive/negative peaks with ATAC-seq peaks or with more than 10 occupied CAPs for each CAP by clicking the following link:
+User can find the analyzed CondSig-positive/negative peaks with ATAC-seq peaks or with more than 10 occupied CAPs for each CAP by clicking the following link:
+
 * [CondSig-positive/negative peaks with ATAC-seq peaks](https://compbio-zhanglab.org/CondSigDB/data/GitHub/component.peaks.classification.ca.tar.gz)
 * [CondSig-positive/negative peaks with more than 10 occupied CAPs](https://compbio-zhanglab.org/CondSigDB/data/GitHub/component.peaks.classification.mo.tar.gz)
 
